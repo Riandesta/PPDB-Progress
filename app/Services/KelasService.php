@@ -4,32 +4,47 @@ namespace App\Services;
 
 use App\Models\Kelas;
 use App\Models\Jurusan;
-use App\Models\CalonSiswa;
+use App\Models\Pendaftaran;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 class KelasService
 {
-    public function assignSiswaToCalonSiswa(CalonSiswa $calonSiswa): bool
+    public function assignSiswaToPendaftaran(Pendaftaran $pendaftaran): bool
     {
         try {
-            // Ambil jurusan
-            $jurusan = Jurusan::findOrFail($calonSiswa->jurusan_id);
+            $jurusan = Jurusan::findOrFail($pendaftaran->jurusan_id);
 
-            // Dapatkan atau buat kelas yang sesuai untuk siswa ini
+            // Hitung total kelas yang tersedia
+            $totalKelas = Kelas::where('jurusan_id', $pendaftaran->jurusan_id)
+                ->where('tahun_ajaran', $pendaftaran->tahun_ajaran)
+                ->count();
+
+            // Cek apakah sudah mencapai batas maksimum kelas
+            if ($totalKelas > $jurusan->max_kelas) {
+                // Set status seleksi menjadi PENDING
+                $pendaftaran->status_seleksi = 'PENDING';
+                $pendaftaran->save();
+                return false;
+            }
+
+            // Cari kelas yang tersedia
             $kelas = $this->findOrCreateBalancedKelas(
-                $calonSiswa->jurusan_id,
-                $calonSiswa->tahun_ajaran,
-                $calonSiswa->nama
+                $pendaftaran->jurusan_id,
+                $pendaftaran->tahun_ajaran,
+                $pendaftaran->nama
             );
 
-            if (!$kelas) {
+            if (!$kelas || $kelas->is_full) {
+                // Set status seleksi menjadi PENDING
+                $pendaftaran->status_seleksi = 'PENDING';
+                $pendaftaran->save();
                 return false;
             }
 
             // Update siswa dengan kelas_id
-            $calonSiswa->kelas_id = $kelas->id;
-            $calonSiswa->save();
+            $pendaftaran->kelas_id = $kelas->id;
+            $pendaftaran->save();
 
             // Update kapasitas kelas
             $kelas->increment('kapasitas_saat_ini');
@@ -56,7 +71,7 @@ class KelasService
         }
 
         // Hitung total siswa per huruf di seluruh kelas
-        $totalLetterCount = CalonSiswa::whereIn('kelas_id', $existingKelas->pluck('id'))
+        $totalLetterCount = Pendaftaran::whereIn('kelas_id', $existingKelas->pluck('id'))
             ->whereRaw('UPPER(LEFT(nama, 1)) = ?', [$firstLetter])
             ->count();
 
@@ -68,7 +83,7 @@ class KelasService
         $minLetterCount = PHP_INT_MAX;
 
         foreach ($existingKelas as $kelas) {
-            $letterCount = CalonSiswa::where('kelas_id', $kelas->id)
+            $letterCount = Pendaftaran::where('kelas_id', $kelas->id)
                 ->whereRaw('UPPER(LEFT(nama, 1)) = ?', [$firstLetter])
                 ->orderBy('nama', 'asc') // Menambahkan pengurutan
                 ->count();
@@ -85,7 +100,7 @@ class KelasService
             }
         }
 
-        // Jika tidak ada kelas yang cocok dan masih bisa membuat kelas baru
+          // Jika tidak ada kelas yang cocok dan masih bisa membuat kelas baru
         if (!$targetKelas && count($existingKelas) < $jurusan->max_kelas) {
             $targetKelas = $this->createNewKelas(
                 $jurusanId,
@@ -113,5 +128,34 @@ class KelasService
             'urutan_kelas' => $urutanKelas,
             'kapasitas_saat_ini' => 0
         ]);
+    }
+
+    public function removeSiswaFromKelas($pendaftaran): bool
+    {
+        try {
+            DB::transaction(function() use ($pendaftaran) {
+                // Update siswa dengan menghapus kelas_id
+                $pendaftaran->kelas_id = null;
+                $pendaftaran->save();
+
+                // Jika ada kelas yang terkait, update kapasitasnya
+                if ($pendaftaran->kelas) {
+                    $kelas = $pendaftaran->kelas;
+                    $kelas->jumlah_siswa = $kelas->calonSiswa()->count() - 1;
+                    $kelas->save();
+                }
+            });
+
+            Log::info('Siswa berhasil dihapus dari kelas', [
+                'pendaftaran_id' => $pendaftaran->id,
+                'nama_siswa' => $pendaftaran->nama
+            ]);
+
+            return true;
+
+        } catch (\Exception $e) {
+            Log::error('Error removing siswa from kelas: ' . $e->getMessage());
+            return false;
+        }
     }
 }

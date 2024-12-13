@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Models\Jurusan;
+use App\Models\Pendaftaran;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,9 +26,9 @@ class Kelas extends Model
     }
 
     // Change this from calonSiswas to calonSiswa to match the usage
-    public function calonSiswa()
+    public function pendaftaran()
     {
-        return $this->hasMany(CalonSiswa::class);
+        return $this->hasMany(Pendaftaran::class);
     }
 
     public function getIsFullAttribute()

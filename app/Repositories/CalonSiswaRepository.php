@@ -2,27 +2,27 @@
 
 namespace App\Repositories;
 
-use App\Models\CalonSiswa;
+use App\Models\Pendaftaran;
 
-class CalonSiswaRepository
+Class PendaftaranRepository
 {
     public function getAll()
     {
-        return CalonSiswa::all();
+        return Pendaftaran::all();
     }
 
     public function create(array $data)
     {
-        return CalonSiswa::create($data);
+        return Pendaftaran::create($data);
     }
 
-    public function update(CalonSiswa $calonSiswa, array $data)
+    public function update(Pendaftaran $Pendaftaran, array $data)
     {
-        return $calonSiswa->update($data);
+        return $Pendaftaran->update($data);
     }
 
-    public function delete(CalonSiswa $calonSiswa)
+    public function delete(Pendaftaran $Pendaftaran)
     {
-        return $calonSiswa->delete();
+        return $Pendaftaran->delete();
     }
 }

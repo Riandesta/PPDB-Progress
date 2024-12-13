@@ -1,108 +1,138 @@
-<aside id="sidebar-left" class="sidebar-left">
+<aside id="sidebar" class="sidebar">
+    <div class="sidebar-content">
+        <nav class="menu">
+            <ul class="sidebar-nav">
+                <!-- Dashboard -->
+                <li class="nav-item {{ request()->routeIs('dashboard') ? 'active' : '' }}">
+                    <a href="{{ route('dashboard') }}" class="nav-link">
+                        <i class="fas fa-tachometer-alt"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
 
-    <div class="sidebar-header">
-        <div class="sidebar-title">
-            Navigation
-        </div>
-        <div class="sidebar-toggle hidden-xs" data-toggle-class="sidebar-left-collapsed" data-target="html" data-fire-event="sidebar-left-toggle">
-            <i class="fa fa-bars" aria-label="Toggle sidebar"></i>
-        </div>
+                <!-- Pendaftaran -->
+                <li class="nav-item {{ request()->routeIs('pendaftaran.*') ? 'active' : '' }}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Pendaftaran</span>
+                        <i class="fas fa-angle-left right"></i>
+                    </a>
+                    <ul class="nav nav-treeview sub-menu">
+                        <li>
+                            <a href="{{ route('pendaftaran.create') }}" class="nav-link">
+                                <i class="far fa-circle"></i>
+                                <span>Form Pendaftaran</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('pendaftaran.index') }}" class="nav-link">
+                                <i class="far fa-circle"></i>
+                                <span>Data Pendaftar</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Administrasi -->
+                <li class="nav-item {{ request()->routeIs('administrasi.*') ? 'active' : '' }}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-money-bill"></i>
+                        <span>Administrasi</span>
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                    <ul class="nav nav-treeview sub-menu">
+                        <li>
+                            <a href="{{ route('administrasi.index') }}" class="nav-link">
+                                <i class="fas fa-cash-register"></i>
+                                <span>Data Pembayaran</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('administrasi.laporan') }}" class="nav-link">
+                                <i class="fas fa-file-invoice-dollar"></i>
+                                <span>Laporan Keuangan</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Manajemen Kelas -->
+                <li class="nav-item {{ request()->routeIs('kelas.*') ? 'active' : '' }}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-door-open"></i>
+                        <span>Pengelolaan Kelas</span>
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                    <ul class="nav nav-treeview sub-menu">
+                        <li>
+                            <a href="{{ route('kelas.index') }}" class="nav-link">
+                                <i class="far fa-circle"></i>
+                                <span>Data Kelas</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('kelas.distribusi') }}" class="nav-link">
+                                <i class="fas fa-random"></i>
+                                <span>Distribusi Kelas</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+
+                <!-- Master Data -->
+                @role('admin')
+                <li class="nav-item {{ request()->routeIs('master.*') ? 'active' : '' }}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-database"></i>
+                        <span>Master Data</span>
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                    <ul class="nav nav-treeview sub-menu">
+                        <li>
+                            <a href="{{ route('jurusan.index') }}" class="nav-link">
+                                <i class="far fa-circle"></i>
+                                <span>Data Jurusan</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('tahun-ajaran.index') }}" class="nav-link">
+                                <i class="far fa-circle"></i>
+                                <span>Tahun Ajaran</span>
+                            </a>
+                        </li>
+                        <li>
+                            {{-- <a href="{{ route('kuota.index') }}" class="nav-link"> --}}
+                                <i class="fas fa-users"></i>
+                                <span>Kuota PPDB</span>
+                            </a>
+                        </li>
+                    </ul>   
+                </li>
+                @endrole
+
+                <!-- Laporan -->
+                <li class="nav-item {{ request()->routeIs('laporan.*') ? 'active' : '' }}">
+                    <a href="#" class="nav-link">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Laporan</span>
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                    <ul class="nav nav-treeview sub-menu">
+                        <li>
+                            <a href="{{ route('laporan.pendaftaran') }}" class="nav-link">
+                                <i class="fas fa-file-signature"></i>
+                                <span>Laporan Pendaftaran</span>
+                            </a>
+                        </li>
+                        <li>
+                            <a href="{{ route('laporan.keuangan') }}" class="nav-link">
+                                <i class="fas fa-file-invoice"></i>
+                                <span>Laporan Keuangan</span>
+                            </a>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </nav>
     </div>
-
-    <div class="nano">
-        <div class="nano-content">
-            <nav id="menu" class="nav-main" role="navigation">
-
-                <ul class="nav nav-main">
-                    <li>
-                        <a href="/Dashboard">
-                            <i class="fa fa-home" aria-hidden="true"></i>
-                            <span>Dashboard</span>
-                        </a>
-                    </li>
-
-                    <li class="nav-parent">
-                        <a href="#">
-                            <i class="fa fa-users" aria-hidden="true"></i>
-                            <span>Pendaftaran</span>
-                        </a>
-                        <ul class="nav nav-children">
-                            <li>
-                                <a href="{{ route('calonSiswa.show') }}">
-                                    Calon Siswa
-                                </a>
-                            </li>
-
-
-                        </ul>
-                    </li>
-                    <li class="nav-parent">
-                        <a href="#">
-                            <i class="fa fa-user" aria-hidden="true"></i>
-                            <span>Panitia</span>
-                        </a>
-                        <ul class="nav nav-children">
-                            <li>
-                                <a href="{{ route('panitia.index') }}">
-                                    Data Panitia
-                                </a>
-                            </li>
-
-                        </ul>
-                    </li>
-
-                    <li class="nav-parent">
-                        <a href="#">
-                            <i class="fa fa-building" aria-hidden="true"></i>
-                            <span>Manajemen Kelas</span>
-                        </a>
-                        <ul class="nav nav-children">
-                            <li>
-                                <a href="{{ route('jurusan.index') }}">
-                                    <span>Jurusan</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="{{ route('kelas.index') }}">
-                                    <span>Kelas</span>
-                                </a>
-                            </li>
-                        </ul>
-                    </li>
-
-                    <li class="nav">
-                        <a href="{{ route('post.index') }}">
-                            <i class="fa fa-pencil-square-o" aria-hidden="true"></i>
-                            <span>Post</span>
-                        </a>
-                    </li>
-
-
-                </ul>
-            </nav>
-
-            <hr class="separator" />
-
-
-
-            <hr class="separator" />
-
-
-        </div>
-
-        <script>
-            // Maintain Scroll Position
-            if (typeof localStorage !== 'undefined') {
-                if (localStorage.getItem('sidebar-left-position') !== null) {
-                    var initialPosition = localStorage.getItem('sidebar-left-position'),
-                        sidebarLeft = document.querySelector('#sidebar-left .nano-content');
-
-                    sidebarLeft.scrollTop = initialPosition;
-                }
-            }
-        </script>
-
-
-    </div>
-
 </aside>

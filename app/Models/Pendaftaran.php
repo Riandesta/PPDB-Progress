@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
-class CalonSiswa extends Model
+class Pendaftaran extends Model
 {
     use HasFactory;
 
@@ -41,10 +41,19 @@ class CalonSiswa extends Model
     {
         return $this->belongsTo(Jurusan::class);
     }
-    // app/Models/CalonSiswa.php
     public function kelas()
     {
         return $this->belongsTo(Kelas::class);
+    }
+
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class);
+    }
+
+    public function administrasi()
+    {
+        return $this->hasOne(Administrasi::class, 'pendaftaran_id', 'id');
     }
 
     // Method to calculate average

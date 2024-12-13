@@ -1,24 +1,22 @@
 <?php
-
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Database\Seeders\UsersTableSeeder;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Database\Seeders\CalonSiswaTableSeeder;
 
 class DatabaseSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run()
     {
         $this->call([
-            UsersTableSeeder::class,
-            JurusanSeeder::class,  // Pastikan jurusan dibuat dulu
-            CalonSiswaTableSeeder::class,
-            // KelasSeeder::class
-            
+            RoleSeeder::class,        // Jalankan RoleSeeder terlebih dahulu
+            UsersSeeder::class,        // Kemudian UserSeeder
+            TahunAjaranSeeder::class, // Buat tahun ajaran
+            JurusanSeeder::class,     // Buat jurusan
+            PembayaranPPDBSeeder::class, // Set biaya PPDB
+            KuotaPPDBSeeder::class,   // Set kuota per jurusan
+            KelasSeeder::class,       // Buat kelas default
+            CalonSiswaSeeder::class,  // Buat data siswa testing
         ]);
     }
 }

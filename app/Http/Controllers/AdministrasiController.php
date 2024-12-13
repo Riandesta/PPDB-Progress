@@ -17,4 +17,20 @@ public function show($calonSiswaId)
     return view('administrasi.show', compact('administrasi'));
 }
 
+public function index()
+{
+    $pembayaran = Administrasi::with('calonSiswa')->get();
+    return view('administrasi.pembayaran.index', compact('pembayaran'));
+}
+
+
+public function laporan()
+{
+    $administrasi = Administrasi::with(['calonSiswa'])
+        ->orderBy('created_at', 'desc')
+        ->get();
+
+    return view('administrasi.laporan', compact('administrasi'));
+}
+
 }

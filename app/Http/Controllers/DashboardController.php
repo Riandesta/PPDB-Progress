@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CalonSiswa;
+use App\Models\KuotaPPDB;
+use App\Models\Pendaftaran;
 use App\Models\Administrasi;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -10,26 +11,43 @@ use Illuminate\Contracts\View\View;
 
 class DashboardController extends Controller
 {
-    //
-    public function show() : View
+    public function index(): View
     {
-        return view('dashboard\index');
+        // Hitung total pembayaran lunas dan belum
+        $pembayaranStats = Administrasi::select(
+            'status_pembayaran',
+            DB::raw('count(*) as total')
+        )->groupBy('status_pembayaran')->get();
+
+        $totalPendaftar = Pendaftaran::count();
+        $pembayaranLunas = $pembayaranStats->where('status_pembayaran', 'Lunas')->first()->total ?? 0;
+        $pembayaranBelumLunas = $pembayaranStats->where('status_pembayaran', 'Belum Lunas')->first()->total ?? 0;
+
+        // Hitung total kuota dan sisa kuota
+        $totalKuota = KuotaPPDB::sum('kuota');
+        $sisaKuota = $totalKuota - $totalPendaftar;
+
+        $statistics = [
+            'total_pendaftar' => $totalPendaftar,
+            'total_diterima' => Pendaftaran::where('status_seleksi', 'Lulus')->count(),
+            'total_pembayaran' => Administrasi::where('status_pembayaran', 'Lunas')
+                ->sum('total_bayar'),
+            'sisa_kuota' => max(0, $sisaKuota),
+            'pendaftar_per_jurusan' => Pendaftaran::select('jurusan_id', DB::raw('count(*) as total'))
+                ->groupBy('jurusan_id')
+                ->with('jurusan')
+                ->get(),
+            'pembayaran_lunas' => $pembayaranLunas,
+            'pembayaran_belum_lunas' => $pembayaranBelumLunas,
+            'persentase_lunas' => $totalPendaftar > 0
+                ? round(($pembayaranLunas / $totalPendaftar) * 100, 1) . '%'
+                : '0%',
+            'persentase_belum_lunas' => $totalPendaftar > 0
+                ? round(($pembayaranBelumLunas / $totalPendaftar) * 100, 1) . '%'
+                : '0%',
+        ];
+
+        return view('dashboard.index', compact('statistics'));
     }
-
-    public function index()
-{
-    $statistics = [
-        'total_pendaftar' => CalonSiswa::count(),
-        'total_diterima' => CalonSiswa::where('status_seleksi', 'Lulus')->count(),
-        'total_pembayaran' => Administrasi::where('status_ppdb', 'Sudah Bayar')->sum('total_pembayaran'),
-        'pendaftar_per_jurusan' => CalonSiswa::select('jurusan_id', DB::raw('count(*) as total'))
-            ->groupBy('jurusan_id')
-            ->with('jurusan')
-            ->get()
-    ];
-
-    return view('dashboard.index', compact('statistics'));
-}
-
-}
+        }
 

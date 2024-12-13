@@ -3,7 +3,7 @@
 namespace App\Models;
 
 use App\Models\Kelas;
-use App\Models\CalonSiswa;
+use App\Models\Pendaftaran;
 use Illuminate\Database\Eloquent\Model;
 
 class Jurusan extends Model
@@ -20,8 +20,8 @@ class Jurusan extends Model
     {
         return $this->hasMany(Kelas::class);
     }
-    public function calonSiswa()
+    public function pendaftaran()
     {
-        return $this->hasMany(CalonSiswa::class);
+        return $this->hasMany(Pendaftaran::class);
     }
 }
