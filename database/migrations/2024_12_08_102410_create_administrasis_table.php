@@ -12,6 +12,13 @@ return new class extends Migration
         Schema::create('administrasis', function (Blueprint $table) {
             $table->id();
 
+            $table->foreignId('pendaftaran_id')
+            ->nullable()
+            ->constrained('pendaftarans')
+            ->onDelete('set null');
+
+          
+
             // Biaya-biaya yang harus dibayar
             $table->decimal('biaya_pendaftaran', 10, 2)->default(100000);
             $table->decimal('biaya_ppdb', 10, 2)->default(5000000);

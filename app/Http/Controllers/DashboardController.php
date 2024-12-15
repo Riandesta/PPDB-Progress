@@ -45,9 +45,20 @@ class DashboardController extends Controller
             'persentase_belum_lunas' => $totalPendaftar > 0
                 ? round(($pembayaranBelumLunas / $totalPendaftar) * 100, 1) . '%'
                 : '0%',
-        ];
 
-        return view('dashboard.index', compact('statistics'));
+                'pendaftar_per_hari' => Pendaftaran::select(
+                    DB::raw('DATE(created_at) as date'),
+                    DB::raw('count(*) as total')
+                )->groupBy('date')->get(),
+                'status_seleksi' => Pendaftaran::select(
+                    'status_seleksi',
+                    DB::raw('count(*) as total')
+                )->groupBy('status_seleksi')->get(),
+                'persentase_kelulusan' => Pendaftaran::where('status_seleksi', 'Lulus')
+                    ->count() / max(1, Pendaftaran::count()) * 100
+        ];
+        $title = 'Dashboard';
+        return view('dashboard.index', compact('statistics', 'title'));
     }
         }
 

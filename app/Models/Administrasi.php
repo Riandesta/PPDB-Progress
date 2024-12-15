@@ -10,7 +10,7 @@ class Administrasi extends Model
 
     protected $table = 'administrasis';
     protected $fillable = [
-        'calon_siswa_id',
+        'pendaftaran_id',
         'biaya_pendaftaran',
         'biaya_ppdb',
         'biaya_mpls',

@@ -4,7 +4,6 @@
 namespace Database\Seeders;
 
 use App\Models\Administrasi;
-use App\Models\PembayaranPPDB;
 use App\Models\TahunAjaran;
 use Illuminate\Database\Seeder;
 
@@ -16,32 +15,47 @@ class PembayaranPPDBSeeder extends Seeder
         $tahunAjaran = TahunAjaran::where('is_active', true)->first();
 
         if (!$tahunAjaran) {
-            $this->command->error('Tahun Ajaran aktif tidak ditemukan. Jalankan TahunAjaranSeeder terlebih dahulu.');
+            $this->command->error('Tahun Ajaran aktif tidak ditemukan!');
             return;
         }
 
-        // Buat data pembayaran untuk tahun ajaran aktif
-        Administrasi::create([
-            'tahun_ajaran_id' => $tahunAjaran->id,
-            'biaya_pendaftaran' => 100000,
-            'biaya_ppdb' => 5000000,
-            'biaya_mpls' => 250000,
-            'biaya_awal_tahun' => 1500000
-        ]);
+        // Gunakan tahun ajaran yang ada untuk membuat data administrasi
+        $biayaPendaftaran = config('ppdb.biaya_pendaftaran', 100000);
+        $biayaPPDB = config('ppdb.biaya_ppdb', 5000000);
+        $biayaMPLS = config('ppdb.biaya_mpls', 250000);
+        $biayaAwalTahun = config('ppdb.biaya_awal_tahun', 1500000);
 
-        // Buat juga data pembayaran untuk tahun ajaran non-aktif
-        $tahunAjaranNonAktif = TahunAjaran::where('is_active', false)->get();
+        $administrasis = [];
+        
+        // Buat data administrasi untuk setiap pendaftaran yang belum memiliki data administrasi
+        $pendaftaranTanpaAdministrasi = \App\Models\Pendaftaran::whereDoesntHave('administrasi')
+            ->where('tahun_ajaran_id', $tahunAjaran->id)
+            ->get();
 
-        foreach ($tahunAjaranNonAktif as $tahun) {
-            Administrasi::create([
-                'tahun_ajaran_id' => $tahun->id,
-                'biaya_pendaftaran' => 100000,
-                'biaya_ppdb' => 5000000,
-                'biaya_mpls' => 250000,
-                'biaya_awal_tahun' => 1500000
-            ]);
+        foreach ($pendaftaranTanpaAdministrasi as $pendaftaran) {
+            $administrasis[] = [
+                'pendaftaran_id' => $pendaftaran->id,
+                'tahun_ajaran_id' => $tahunAjaran->id,
+                'biaya_pendaftaran' => $biayaPendaftaran,
+                'biaya_ppdb' => $biayaPPDB,
+                'biaya_mpls' => $biayaMPLS,
+                'biaya_awal_tahun' => $biayaAwalTahun,
+                'total_bayar' => 0,
+                'status_pembayaran' => 'Belum Lunas',
+                'is_pendaftaran_lunas' => false,
+                'is_ppdb_lunas' => false,
+                'is_mpls_lunas' => false,
+                'is_awal_tahun_lunas' => false,
+                'created_at' => now(),
+                'updated_at' => now()
+            ];
         }
 
-        $this->command->info('Data pembayaran PPDB berhasil dibuat.');
+        if (!empty($administrasis)) {
+            Administrasi::insert($administrasis);
+            $this->command->info('Data administrasi berhasil dibuat untuk ' . count($administrasis) . ' pendaftar.');
+        } else {
+            $this->command->info('Semua pendaftar sudah memiliki data administrasi.');
+        }
     }
 }

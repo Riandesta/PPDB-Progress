@@ -4,8 +4,10 @@
 namespace App\Services;
 
 use App\Models\KuotaPPDB;
+use Faker\Provider\Image;
 use App\Models\Pendaftaran;
 use App\Models\TahunAjaran;
+use Nette\Utils\Image as foto;
 use App\Models\Administrasi;
 use App\Services\KelasService;
 use Illuminate\Support\Facades\DB;
@@ -104,6 +106,43 @@ class PendaftaranService
         }
     }
 
+private function handleFotoUpload($file)
+{
+    $fileName = time() . '_' . $file->getClientOriginalName();
+    $path = $file->storeAs('public/foto-siswa', $fileName);
+
+    // Kompres foto
+    $img = foto::make(storage_path('app/' . $path));
+    $img->resize(800, null, function ($constraint) {
+        $constraint->aspectRatio();
+        $constraint->upsize();
+    });
+    $img->save();
+
+    return $path;
+}
+
+public function validateJurusanKuota($jurusanId)
+    {
+        $kuota = KuotaPPDB::where('jurusan_id', $jurusanId)
+            ->where('tahun_ajaran_id', $this->getActiveTahunAjaran()->id)
+            ->first();
+
+        if (!$kuota || !$kuota->isKuotaAvailable()) {
+            throw new \Exception('Kuota untuk jurusan ini sudah penuh');
+        }
+
+        return true;
+    }
+
+    private function getActiveTahunAjaran()
+    {
+        $tahunAjaran = TahunAjaran::where('status', 'aktif')->first();
+        if (!$tahunAjaran) {
+            throw new \Exception('Tidak ada tahun ajaran yang aktif');
+        }
+        return $tahunAjaran;
+    }
 
     public function updatePendaftaran($pendaftaran, $data)
     {
@@ -166,9 +205,7 @@ public function deletePendaftaran($pendaftaran)
                 Storage::delete($pendaftaran->foto);
             }
 
-            // Hapus data administrasi terkait
-            // Ini akan otomatis terhapus jika menggunakan onDelete('cascade')
-            // tapi kita tambahkan untuk memastikan
+           
             if ($pendaftaran->administrasi) {
                 $pendaftaran->administrasi->delete();
             }
@@ -189,6 +226,14 @@ public function deletePendaftaran($pendaftaran)
     });
 }
 
+
+public function deleteFotoIfExists($fotoPath)
+{
+    if ($fotoPath && Storage::exists($fotoPath)) {
+        Storage::delete($fotoPath);
+    }
+}
+
  // Method helper untuk validasi data sebelum update
  private function validateUpdateData($pendaftaran, $data)
  {
@@ -199,8 +244,9 @@ public function deletePendaftaran($pendaftaran)
 
      // Validasi perubahan tahun ajaran
      if (isset($data['tahun_ajaran_id']) && $data['tahun_ajaran_id'] !== $pendaftaran->tahun_ajaran_id) {
-         throw new \Exception('Tidak dapat mengubah tahun ajaran pendaftaran');
-     }
+        throw new \Exception('Tidak dapat mengubah tahun ajaran pendaftaran');
+    }
+
 
      return true;
  }

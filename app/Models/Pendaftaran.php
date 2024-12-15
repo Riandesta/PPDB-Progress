@@ -24,7 +24,7 @@ class Pendaftaran extends Model
         'pekerjaan_ortu',
         'no_telp_ortu',
         'foto',
-        'tahun_ajaran',
+        'tahun_ajaran_id',
         'jurusan_id',
         'status_dokumen',
         'nilai_semester_1',
@@ -35,7 +35,11 @@ class Pendaftaran extends Model
         'rata_rata_nilai',
         'status_seleksi'
     ];
-
+    
+    public function administrasi()
+    {
+        return $this->hasOne(Administrasi::class, 'pendaftaran_id');
+    }
 
     public function jurusan()
     {
@@ -50,13 +54,6 @@ class Pendaftaran extends Model
     {
         return $this->belongsTo(TahunAjaran::class);
     }
-
-    public function administrasi()
-    {
-        return $this->hasOne(Administrasi::class, 'pendaftaran_id', 'id');
-    }
-
-    // Method to calculate average
     public function hitungRataRata()
     {
         $nilai = [

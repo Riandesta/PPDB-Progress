@@ -1,158 +1,189 @@
 <!doctype html>
-<html class="fixed">
+<html lang="en">
 
 <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta http-equiv="X-UA-Compatible" content="ie=edge" />
+    {{-- <title>{{ $title }}</title> --}}
+    <!-- CSS files -->
+    <link href="{{ asset('dist/css/tabler.min.css?1692870487') }}" rel="stylesheet" />
+    <link href="{{ asset('dist/css/tabler-flags.min.css?1692870487') }}" rel="stylesheet" />
+    <link href="{{ asset('dist/css/tabler-payments.min.css?1692870487') }}" rel="stylesheet" />
+    <link href="{{ asset('dist/css/tabler-vendors.min.css?1692870487') }}" rel="stylesheet" />
+    <link href="{{ asset('dist/css/demo.min.css?1692870487') }}" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <style>
+        @import url('https://rsms.me/inter/inter.css');
 
-    <!-- Basic -->
-    <meta charset="UTF-8">
+        :root {
+            --tblr-font-sans-serif: 'Inter Var', -apple-system, BlinkMacSystemFont, San Francisco, Segoe UI, Roboto, Helvetica Neue, sans-serif;
+        }
 
-    <title>Default Layout | Porto Admin - Responsive HTML5 Template 1.7.0</title>
-    <meta name="keywords" content="HTML5 Admin Template" />
-    <meta name="description" content="Porto Admin - Responsive HTML5 Template">
-    <meta name="author" content="okler.net">
-
-    <!-- Mobile Metas -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-
-
-    <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
-
-
-    <!-- Web Fonts  -->
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700,800|Shadows+Into+Light"
-        rel="stylesheet" type="text/css">
-
-    <!-- Vendor CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap/css/bootstrap.css') }}" />
-
-    <link rel="stylesheet" href="{{ asset('assets/vendor/font-awesome/css/font-awesome.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/magnific-popup/magnific-popup.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-datepicker/css/bootstrap-datepicker3.css') }}" />
-
-    <!-- Specific Page Vendor CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/vendor/jquery-ui/jquery-ui.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/jquery-ui/jquery-ui.theme.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/bootstrap-multiselect/bootstrap-multiselect.css') }}" />
-    <link rel="stylesheet" href="{{ asset('assets/vendor/morris.js/morris.css') }}" />
-
-    <!-- Theme CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/stylesheets/theme.css') }}" />
-
-    <!-- Skin CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/stylesheets/skins/default.css') }}" />
-
-    <!-- Theme Custom CSS -->
-    <link rel="stylesheet" href="{{ asset('assets/stylesheets/theme-custom.css') }}">
-
-    <!-- Head Libs -->
-    <script src="{{ asset('assets/vendor/modernizr/modernizr.js') }}"></script>
-
-    {{-- icon --}}
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-
+        body {
+            font-feature-settings: "cv03", "cv04", "cv11";
+        }
+    </style>
 </head>
 
 <body>
-    <section class="body">
-
-        <!-- start: header -->
-        @include('components.header')
-        <!-- end: header -->
-
-        <div class="inner-wrapper">
-            <!-- start: sidebar -->
-            @include('components.sidebar')
-            <!-- end: sidebar -->
-
-            <section role="main" class="content-body">
-                <header class="page-header">
-                    <h2>{{ $title ?? 'Default' }}</h2>
-
-                    <div class="right-wrapper pull-right">
-                        <ol class="breadcrumbs">
-                            <li>
-                                <a href="index.html">
-                                    <i class="fa fa-home"></i>
-                                </a>
-                            </li>
-                            <li><span>Layouts</span></li>
-                            <li><span>Default</span></li>
-                        </ol>
-
-                        <a class="sidebar-right-toggle" data-open="sidebar-right"><i class="fa fa-chevron-left"></i></a>
-                    </div>
-                </header>
-
-                <!-- start: page -->
-                @include('components.body')
-
-
-                <!-- end: page -->
-            </section>
+    <script src="./dist/js/tabler.min.js"></script>
+    <script src="./dist/js/demo-theme.min.js?1692870487"></script>
+    <div class="page">
+        <!-- Sidebar -->
+        <x-side-bar></x-side-bar>
+        <div class="page-wrapper">
+            <!-- Page header -->
+            <x-header></x-header>
+            <!-- Page body -->
+            <div class="page-body">
+                <div class="container-xl">
+                    {{ $slot }}
+                </div>
+            </div>
+            <x-footer></x-footer>
         </div>
+    </div>
 
-        {{-- sidebar right --}}
-        @include('components.sidebarRight')
-        {{-- ./sidebarright --}}
+    <!-- MODAL CREATE NEW REPORT -->
+    <div class="modal modal-blur fade" id="modal-report" tabindex="-1" role="dialog" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">New report</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name</label>
+                        <input type="text" class="form-control" name="example-text-input"
+                            placeholder="Your report name">
+                    </div>
+                    <label class="form-label">Report type</label>
+                    <div class="form-selectgroup-boxes row mb-3">
+                        <div class="col-lg-6">
+                            <label class="form-selectgroup-item">
+                                <input type="radio" name="report-type" value="1" class="form-selectgroup-input"
+                                    checked>
+                                <span class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <span class="me-3">
+                                        <span class="form-selectgroup-check"></span>
+                                    </span>
+                                    <span class="form-selectgroup-label-content">
+                                        <span class="form-selectgroup-title strong mb-1">Simple</span>
+                                        <span class="d-block text-secondary">Provide only basic data needed for the
+                                            report</span>
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                        <div class="col-lg-6">
+                            <label class="form-selectgroup-item">
+                                <input type="radio" name="report-type" value="1" class="form-selectgroup-input">
+                                <span class="form-selectgroup-label d-flex align-items-center p-3">
+                                    <span class="me-3">
+                                        <span class="form-selectgroup-check"></span>
+                                    </span>
+                                    <span class="form-selectgroup-label-content">
+                                        <span class="form-selectgroup-title strong mb-1">Advanced</span>
+                                        <span class="d-block text-secondary">Insert charts and additional advanced
+                                            analyses to be inserted in the report</span>
+                                    </span>
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-lg-8">
+                            <div class="mb-3">
+                                <label class="form-label">Report url</label>
+                                <div class="input-group input-group-flat">
+                                    <span class="input-group-text">
+                                        https://tabler.io/reports/
+                                    </span>
+                                    <input type="text" class="form-control ps-0" value="report-01"
+                                        autocomplete="off">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="mb-3">
+                                <label class="form-label">Visibility</label>
+                                <select class="form-select">
+                                    <option value="1" selected>Private</option>
+                                    <option value="2">Public</option>
+                                    <option value="3">Hidden</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Client name</label>
+                                <input type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="mb-3">
+                                <label class="form-label">Reporting period</label>
+                                <input type="date" class="form-control">
+                            </div>
+                        </div>
+                        <div class="col-lg-12">
+                            <div>
+                                <label class="form-label">Additional information</label>
+                                <textarea class="form-control" rows="3"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <a href="#" class="btn btn-link link-secondary" data-bs-dismiss="modal">
+                        Cancel
+                    </a>
+                    <a href="#" class="btn btn-primary ms-auto" data-bs-dismiss="modal">
+                        <!-- Download SVG icon from http://tabler-icons.io/i/plus -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24" height="24"
+                            viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" fill="none"
+                            stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M5 12l14 0" />
+                        </svg>
+                        Create new report
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Libs JS -->
+    <script src="{{ asset('dist/libs/apexcharts/dist/apexcharts.min.js?1692870487') }}" defer></script>
+    <script src="{{ asset('dist/libs/jsvectormap/dist/js/jsvectormap.min.js?1692870487') }}" defer></script>
+    <script src="{{ asset('dist/libs/jsvectormap/dist/maps/world.js?1692870487') }}" defer></script>
+    <script src="{{ asset('dist/libs/jsvectormap/dist/maps/world-merc.js?1692870487') }}" defer></script>
+    <script src="{{ asset('dist/libs/nouislider/dist/nouislider.min.js?1692870487') }}" defer></script>
+    <script src="{{ asset('dist/libs/litepicker/dist/litepicker.js?1692870487') }}" defer></script>
+    <script src="{{ asset('dist/libs/tom-select/dist/js/tom-select.base.min.js?1692870487') }}" defer></script>
 
-    </section>
+    <!-- Tabler Core -->
+    <script src="{{ asset('dist/js/tabler.min.js?1692870487') }}" defer></script>
+    <script src="{{ asset('dist/js/demo.min.js?1692870487') }}" defer></script>
 
-    <!-- Vendor -->
-    <script src="{{ asset('assets/vendor/jquery/jquery.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jquery-browser-mobile/jquery.browser.mobile.js') }}"></script>
-    <script src="{{ asset('assets/vendor/bootstrap/js/bootstrap.js') }}"></script>
-    <script src="{{ asset('assets/vendor/nanoscroller/nanoscroller.js') }}"></script>
-    <script src="{{ asset('assets/vendor/bootstrap-datepicker/js/bootstrap-datepicker.js') }}"></script>
-    <script src="{{ asset('assets/vendor/magnific-popup/jquery.magnific-popup.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jquery-placeholder/jquery-placeholder.js') }}"></script>
+    <!-- Custom App JS -->
+    <script src="{{ asset('js/app.js') }}"></script>
+    <script src="{{ asset('js/form.js') }}"></script>
 
-    <!-- Specific Page Vendor -->
-    <script src="{{ asset('assets/vendor/jquery-ui/jquery-ui.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqueryui-touch-punch/jqueryui-touch-punch.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jquery-appear/jquery-appear.js') }}"></script>
-    <script src="{{ asset('assets/vendor/bootstrap-multiselect/bootstrap-multiselect.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jquery.easy-pie-chart/jquery.easy-pie-chart.js') }}"></script>
-    <script src="{{ asset('assets/vendor/flot/jquery.flot.js') }}"></script>
-    <script src="{{ asset('assets/vendor/flot.tooltip/flot.tooltip.js') }}"></script>
-    <script src="{{ asset('assets/vendor/flot/jquery.flot.pie.js') }}"></script>
-    <script src="{{ asset('assets/vendor/flot/jquery.flot.categories.js') }}"></script>
-    <script src="{{ asset('assets/vendor/flot/jquery.flot.resize.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jquery-sparkline/jquery-sparkline.js') }}"></script>
-    <script src="{{ asset('assets/vendor/raphael/raphael.js') }}"></script>
-    <script src="{{ asset('assets/vendor/morris.js/morris.js') }}"></script>
-    <script src="{{ asset('assets/vendor/gauge/gauge.js') }}"></script>
-    <script src="{{ asset('assets/vendor/snap.svg/snap.svg.js') }}"></script>
-    <script src="{{ asset('assets/vendor/liquid-meter/liquid.meter.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/jquery.vmap.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/data/jquery.vmap.sampledata.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/maps/jquery.vmap.world.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/maps/continents/jquery.vmap.africa.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/maps/continents/jquery.vmap.asia.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/maps/continents/jquery.vmap.australia.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/maps/continents/jquery.vmap.europe.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/maps/continents/jquery.vmap.north-america.js') }}"></script>
-    <script src="{{ asset('assets/vendor/jqvmap/maps/continents/jquery.vmap.south-america.js') }}"></script>
+    <!-- Di bagian head -->
+    <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
 
-    <!-- Theme Base, Components and Settings -->
-    <script src="{{ asset('assets/javascripts/theme.js') }}"></script>
-
-    <!-- Theme Custom -->
-    <script src="{{ asset('assets/javascripts/theme.custom.js') }}"></script>
-
-    <!-- Theme Initialization Files -->
-    <script src="{{ asset('assets/javascripts/theme.init.js') }}"></script>
-
-    <!-- Examples -->
-    <script src="{{ asset('assets/javascripts/dashboard/examples.dashboard.js') }}"></script>
-
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/buttons/2.2.2/css/buttons.bootstrap5.min.css">
-
+    <!-- Di bagian scripts -->
     <script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.2.2/js/dataTables.buttons.min.js"></script>
-    <script src="https://cdn.datatables.net/buttons/2.2.2/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 
 

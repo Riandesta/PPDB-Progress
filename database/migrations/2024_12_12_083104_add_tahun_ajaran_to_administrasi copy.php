@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('administrasis', function (Blueprint $table) {
-                        $table->foreignId('tahun_ajaran_id')
-                  ->nullable()
-                  ->constrained('tahun_ajaran')
-                  ->onDelete('set null');
+            $table->foreignId('tahun_ajaran_id')
+            ->nullable()
+            ->constrained('tahun_ajaran')
+            ->onDelete('set null');
         });
     }
 

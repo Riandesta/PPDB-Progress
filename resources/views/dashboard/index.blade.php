@@ -1,187 +1,124 @@
 <x-layout>
-    <x-slot name="title">
-        Dashboard PPDB
-    </x-slot>
+    <x-slot:title>
 
-    <div class="row">
-        <!-- Statistik Utama -->
-        <div class="col-md-12">
-            <div class="row">
-                <!-- Total Pendaftar -->
-                <div class="col-md-3">
-                    <section class="panel panel-featured-left panel-featured-primary">
-                        <div class="panel-body">
-                            <div class="widget-summary">
-                                <div class="widget-summary-col widget-summary-col-icon">
-                                    <div class="summary-icon bg-primary">
-                                        <i class="fa fa-users"></i>
-                                    </div>
-                                </div>
-                                <div class="widget-summary-col">
-                                    <div class="summary">
-                                        <h4 class="title">Total Pendaftar</h4>
-                                        <div class="info">
-                                            <strong class="amount">{{ $statistics['total_pendaftar'] }}</strong>
-                                        </div>
-                                    </div>
+    {{$title}}
+
+    </x-slot:title>
+    <div class="container-fluid">
+        <!-- Statistics Cards -->
+        <div class="row">
+            {{-- Statistik Cards --}}
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-left-primary shadow h-100 py-2">
+                    <div class="card-body">
+                        <div class="row no-gutters align-items-center">
+                            <div class="col mr-2">
+                                <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                    Total Pendaftar</div>
+                                <div class="h5 mb-0 font-weight-bold text-gray-800">
+                                    {{ $statistics['total_pendaftar'] }}
                                 </div>
                             </div>
+                            <div class="col-auto">
+                                <i class="fas fa-users fa-2x text-gray-300"></i>
+                            </div>
                         </div>
-                    </section>
+                    </div>
                 </div>
-
-                <!-- Pendaftar Diterima -->
-                <div class="col-md-3">
-                    <section class="panel panel-featured-left panel-featured-success">
-                        <div class="panel-body">
-                            <div class="widget-summary">
-                                <div class="widget-summary-col widget-summary-col-icon">
-                                    <div class="summary-icon bg-success">
-                                        <i class="fa fa-check"></i>
-                                    </div>
-                                </div>
-                                <div class="widget-summary-col">
-                                    <div class="summary">
-                                        <h4 class="title">Diterima</h4>
-                                        <div class="info">
-                                            <strong class="amount">{{ $statistics['total_diterima'] }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-success text-white mb-4">
+                    <div class="card-body">
+                        <h4>Diterima</h4>
+                        <h2 class="mb-0">{{ $statistics['total_diterima'] }}</h2>
+                    </div>
                 </div>
-
-                <!-- Total Pembayaran -->
-                <div class="col-md-3">
-                    <section class="panel panel-featured-left panel-featured-quaternary">
-                        <div class="panel-body">
-                            <div class="widget-summary">
-                                <div class="widget-summary-col widget-summary-col-icon">
-                                    <div class="summary-icon bg-quaternary">
-                                        <i class="fa fa-money"></i>
-                                    </div>
-                                </div>
-                                <div class="widget-summary-col">
-                                    <div class="summary">
-                                        <h4 class="title">Total Pembayaran</h4>
-                                        <div class="info">
-                                            <strong class="amount">Rp {{ number_format($statistics['total_pembayaran'], 0, ',', '.') }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-warning text-white mb-4">
+                    <div class="card-body">
+                        <h4>Total Pembayaran</h4>
+                        <h2 class="mb-0">Rp {{ number_format($statistics['total_pembayaran'], 0, ',', '.') }}</h2>
+                    </div>
                 </div>
+            </div>
+            <div class="col-xl-3 col-md-6">
+                <div class="card bg-info text-white mb-4">
+                    <div class="card-body">
+                        <h4>Sisa Kuota</h4>
+                        <h2 class="mb-0">{{ $statistics['sisa_kuota'] }}</h2>
+                    </div>
+                </div>
+            </div>
+        </div>
 
-                <!-- Sisa Kuota -->
-                <div class="col-md-3">
-                    <section class="panel panel-featured-left panel-featured-secondary">
-                        <div class="panel-body">
-                            <div class="widget-summary">
-                                <div class="widget-summary-col widget-summary-col-icon">
-                                    <div class="summary-icon bg-secondary">
-                                        <i class="fa fa-graduation-cap"></i>
-                                    </div>
-                                </div>
-                                <div class="widget-summary-col">
-                                    <div class="summary">
-                                        <h4 class="title">Sisa Kuota</h4>
-                                        <div class="info">
-                                            <strong class="amount">{{ $statistics['sisa_kuota'] ?? 0 }}</strong>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </section>
+        <div class="row">
+            <div class="col-xl-12 col-lg-7">
+                <div class="card shadow mb-4">
+                    <div class="card-header py-3">
+                        <h6 class="m-0 font-weight-bold text-primary">Statistik Pendaftaran</h6>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="pendaftaranChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row -->
+        <div class="row">
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-pie me-1"></i>
+                        Pendaftar per Jurusan
+                    </div>
+                    <div class="card-body">
+                        <canvas id="pendaftarPerJurusanChart" width="100%" height="40"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-6">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <i class="fas fa-chart-bar me-1"></i>
+                        Status Pembayaran
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statusPembayaranChart" width="100%" height="40"></canvas>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Grafik dan Detail -->
-    <div class="row">
-        <!-- Grafik Pendaftar per Jurusan -->
-        <div class="col-md-6">
-            <section class="panel">
-                <header class="panel-heading">
-                    <h2 class="panel-title">Pendaftar per Jurusan</h2>
-                </header>
-                <div class="panel-body">
-                    <div class="chart-container" style="position: relative; height:300px;">
-                        <canvas id="chartJurusan"></canvas>
-                    </div>
-                </div>
-            </section>
-        </div>
-
-        <!-- Tabel Status Pembayaran -->
-        <div class="col-md-6">
-            <section class="panel">
-                <header class="panel-heading">
-                    <h2 class="panel-title">Status Pembayaran</h2>
-                </header>
-                <div class="panel-body">
-                    <table class="table table-bordered table-striped mb-none">
-                        <thead>
-                            <tr>
-                                <th>Status</th>
-                                <th>Jumlah</th>
-                                <th>Persentase</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>Lunas</td>
-                                <td>{{ $statistics['pembayaran_lunas'] ?? 0 }}</td>
-                                <td>{{ $statistics['persentase_lunas'] ?? '0%' }}</td>
-                            </tr>
-                            <tr>
-                                <td>Belum Lunas</td>
-                                <td>{{ $statistics['pembayaran_belum_lunas'] ?? 0 }}</td>
-                                <td>{{ $statistics['persentase_belum_lunas'] ?? '0%' }}</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </section>
-        </div>
-    </div>
-
     @push('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        // Data untuk grafik jurusan
-        const jurusanData = @json($statistics['pendaftar_per_jurusan']);
-
-        // Inisialisasi grafik
-        const ctx = document.getElementById('chartJurusan').getContext('2d');
-        new Chart(ctx, {
-            type: 'bar',
+        // Chart for Pendaftar per Jurusan
+        const pendaftarCtx = document.getElementById('pendaftarPerJurusanChart');
+        new Chart(pendaftarCtx, {
+            type: 'pie',
             data: {
-                labels: jurusanData.map(item => item.jurusan.nama),
+                labels: {!! json_encode($statistics['pendaftar_per_jurusan']->pluck('jurusan.nama_jurusan')) !!},
                 datasets: [{
-                    label: 'Jumlah Pendaftar',
-                    data: jurusanData.map(item => item.total),
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgb(54, 162, 235)',
-                    borderWidth: 1
+                    data: {!! json_encode($statistics['pendaftar_per_jurusan']->pluck('total')) !!},
+                    backgroundColor: ['#0d6efd', '#198754', '#ffc107', '#0dcaf0']
                 }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                }
+            }
+        });
+
+        // Chart for Status Pembayaran
+        const pembayaranCtx = document.getElementById('statusPembayaranChart');
+        new Chart(pembayaranCtx, {
+            type: 'bar', ['Lunas', 'Belum Lunas'],
+                datasets: [{
+                    label: 'Jumlah Siswa',
+                    data: [
+                        {{ $statistics['pembayaran_lunas'] }},
+                        {{ $statistics['pembayaran_belum_lunas'] }}
+                    ],
+                    backgroundColor: ['#198754', '#dc3545']
+                }]
             }
         });
     </script>

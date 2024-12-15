@@ -1,245 +1,76 @@
-<header class="header">
-    <div class="logo-container">
-        <a href="../1.7.0" class="logo">
-            <img src="assets/images/logo.png" width="75" height="35" alt="Porto Admin" />
-        </a>
-        <div class="visible-xs toggle-sidebar-left" data-toggle-class="sidebar-left-opened" data-target="html" data-fire-event="sidebar-left-opened">
-            <i class="fa fa-bars" aria-label="Toggle sidebar"></i>
-        </div>
-    </div>
-
-    <!-- start: search & user box -->
-    <div class="header-right">
-        @auth
-            <span class="separator"></span>
-            <div id="userbox" class="userbox">
-                <a href="#" data-toggle="dropdown">
-                    <figure class="profile-picture">
-                        <img src="{{ asset('assets/images/!logged-user.jpg') }}" alt="{{ Auth::user()->name }}" class="img-circle" />
-                    </figure>
-                    <div class="profile-info">
-                        <span class="name">{{ Auth::user()->name }}</span>
-                        <span class="role">{{ Auth::user()->email }}</span>
+<header class="navbar navbar-expand-md navbar-light d-none d-lg-flex">
+    <div class="container-xl justify-content-end p-2 ">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar-menu">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="navbar-nav flex-row order-md-last me-5">
+            <div class="nav-item dropdown">
+                <a href="#" class="nav-link d-flex lh-1 text-reset p-0" data-bs-toggle="dropdown" aria-label="Open user menu">
+                    <span class="avatar avatar-sm">{{ substr(auth()->user()->name, 0, 2) }}</span>
+                    <div class="d-none d-xl-block ps-2">
+                        <div>{{ auth()->user()->name }}</div>
+                        <div class="mt-1 small text-muted">{{ auth()->user()->email }}</div>
                     </div>
-                    <i class="fa custom-caret"></i>
                 </a>
-
-                <div class="dropdown-menu">
-                    <ul class="list-unstyled">
-                        <li>
-                            <a role="menuitem" href="{{ route('profile.edit') }}">
-                                <i class="fa fa-user"></i> My Profile
-                            </a>
-                        </li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}">
-                                @csrf
-                                <a role="menuitem" href="{{ route('logout') }}"
-                                    onclick="event.preventDefault(); this.closest('form').submit();">
-                                    <i class="fa fa-power-off"></i> Logout
-                                </a>
-                            </form>
-                        </li>
-                    </ul>
+                <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow justify-between">
+                    <a href="{{ route('profile.edit') }}" class="dropdown-item">Profile</a>
+                    <div class="dropdown-divider"></div>
+                    <form method="POST" action="{{ route('logout') }}">
+                        @csrf
+                        <button type="submit" class="dropdown-item">Logout</button>
+                    </form>
                 </div>
-            </div>
-        @endauth
-    </div>
-
-
-        <span class="separator"></span>
-{{--
-        <ul class="notifications">
-            <li>
-                <a href="#" class="dropdown-toggle notification-icon" data-toggle="dropdown">
-                    <i class="fa fa-tasks"></i>
-                    <span class="badge">3</span>
-                </a>
-
-                <div class="dropdown-menu notification-menu large">
-                    <div class="notification-title">
-                        <span class="pull-right label label-default">3</span>
-                        Tasks
-                    </div>
-
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <p class="clearfix mb-xs">
-                                    <span class="message pull-left">Generating Sales Report</span>
-                                    <span class="message pull-right text-dark">60%</span>
-                                </p>
-                                <div class="progress progress-xs light">
-                                    <div class="progress-bar" role="progressbar" aria-valuenow="60" aria-valuemin="0" aria-valuemax="100" style="width: 60%;"></div>
-                                </div>
-                            </li>
-
-                            <li>
-                                <p class="clearfix mb-xs">
-                                    <span class="message pull-left">Importing Contacts</span>
-                                    <span class="message pull-right text-dark">98%</span>
-                                </p>
-                                <div class="progress progress-xs light">
-                                    <div class="progress-bar" role="progressbar" aria-valuenow="98" aria-valuemin="0" aria-valuemax="100" style="width: 98%;"></div>
-                                </div>
-                            </li>
-
-                            <li>
-                                <p class="clearfix mb-xs">
-                                    <span class="message pull-left">Uploading something big</span>
-                                    <span class="message pull-right text-dark">33%</span>
-                                </p>
-                                <div class="progress progress-xs light mb-xs">
-                                    <div class="progress-bar" role="progressbar" aria-valuenow="33" aria-valuemin="0" aria-valuemax="100" style="width: 33%;"></div>
-                                </div>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </li>
-            <li>
-                <a href="#" class="dropdown-toggle notification-icon" data-toggle="dropdown">
-                    <i class="fa fa-envelope"></i>
-                    <span class="badge">4</span>
-                </a>
-
-                <div class="dropdown-menu notification-menu">
-                    <div class="notification-title">
-                        <span class="pull-right label label-default">230</span>
-                        Messages
-                    </div>
-
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <a href="#" class="clearfix">
-                                    <figure class="image">
-                                        <img src="assets/images/!sample-user.jpg" alt="Joseph Doe Junior" class="img-circle" />
-                                    </figure>
-                                    <span class="title">Joseph Doe</span>
-                                    <span class="message">Lorem ipsum dolor sit.</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="clearfix">
-                                    <figure class="image">
-                                        <img src="assets/images/!sample-user.jpg" alt="Joseph Junior" class="img-circle" />
-                                    </figure>
-                                    <span class="title">Joseph Junior</span>
-                                    <span class="message truncate">Truncated message. Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sit amet lacinia orci. Proin vestibulum eget risus non luctus. Nunc cursus lacinia lacinia. Nulla molestie malesuada est ac tincidunt. Quisque eget convallis diam, nec venenatis risus. Vestibulum blandit faucibus est et malesuada. Sed interdum cursus dui nec venenatis. Pellentesque non nisi lobortis, rutrum eros ut, convallis nisi. Sed tellus turpis, dignissim sit amet tristique quis, pretium id est. Sed aliquam diam diam, sit amet faucibus tellus ultricies eu. Aliquam lacinia nibh a metus bibendum, eu commodo eros commodo. Sed commodo molestie elit, a molestie lacus porttitor id. Donec facilisis varius sapien, ac fringilla velit porttitor et. Nam tincidunt gravida dui, sed pharetra odio pharetra nec. Duis consectetur venenatis pharetra. Vestibulum egestas nisi quis elementum elementum.</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="clearfix">
-                                    <figure class="image">
-                                        <img src="assets/images/!sample-user.jpg" alt="Joe Junior" class="img-circle" />
-                                    </figure>
-                                    <span class="title">Joe Junior</span>
-                                    <span class="message">Lorem ipsum dolor sit.</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="clearfix">
-                                    <figure class="image">
-                                        <img src="assets/images/!sample-user.jpg" alt="Joseph Junior" class="img-circle" />
-                                    </figure>
-                                    <span class="title">Joseph Junior</span>
-                                    <span class="message">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec sit amet lacinia orci. Proin vestibulum eget risus non luctus. Nunc cursus lacinia lacinia. Nulla molestie malesuada est ac tincidunt. Quisque eget convallis diam.</span>
-                                </a>
-                            </li>
-                        </ul>
-
-                        <hr />
-
-                        <div class="text-right">
-                            <a href="#" class="view-more">View All</a>
-                        </div>
-                    </div>
-                </div>
-            </li>
-            <li>
-                <a href="#" class="dropdown-toggle notification-icon" data-toggle="dropdown">
-                    <i class="fa fa-bell"></i>
-                    <span class="badge">3</span>
-                </a>
-
-                <div class="dropdown-menu notification-menu">
-                    <div class="notification-title">
-                        <span class="pull-right label label-default">3</span>
-                        Alerts
-                    </div>
-
-                    <div class="content">
-                        <ul>
-                            <li>
-                                <a href="#" class="clearfix">
-                                    <div class="image">
-                                        <i class="fa fa-thumbs-down bg-danger"></i>
-                                    </div>
-                                    <span class="title">Server is Down!</span>
-                                    <span class="message">Just now</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="clearfix">
-                                    <div class="image">
-                                        <i class="fa fa-lock bg-warning"></i>
-                                    </div>
-                                    <span class="title">User Locked</span>
-                                    <span class="message">15 minutes ago</span>
-                                </a>
-                            </li>
-                            <li>
-                                <a href="#" class="clearfix">
-                                    <div class="image">
-                                        <i class="fa fa-signal bg-success"></i>
-                                    </div>
-                                    <span class="title">Connection Restaured</span>
-                                    <span class="message">10/10/2016</span>
-                                </a>
-                            </li>
-                        </ul>
-
-                        <hr />
-
-                        <div class="text-right">
-                            <a href="#" class="view-more">View All</a>
-                        </div>
-                    </div>
-                </div>
-            </li>
-        </ul> --}}
-
-
-
-        {{-- <div id="userbox" class="userbox">
-            <a href="#" data-toggle="dropdown">
-                <figure class="profile-picture">
-                    <img src="assets/images/!logged-user.jpg" alt="Joseph Doe" class="img-circle" data-lock-picture="assets/images/!logged-user.jpg" />
-                </figure>
-                <div class="profile-info" data-lock-name="John Doe" data-lock-email="johndoe@okler.com">
-                    <span class="name">John Doe Junior</span>
-                    <span class="role">administrator</span>
-                </div> --}}
-
-                {{-- <i class="fa custom-caret"></i>
-            </a> --}}
-
-            <div class="dropdown-menu">
-                <ul class="list-unstyled">
-                    <li class="divider"></li>
-                    <li>
-                        <a role="menuitem" tabindex="-1" href="pages-user-profile.html"><i class="fa fa-user"></i> My Profile</a>
-                    </li>
-                    <li>
-                        <a role="menuitem" tabindex="-1" href="#" data-lock-screen="true"><i class="fa fa-lock"></i> Lock Screen</a>
-                    </li>
-                    <li>
-                        <a role="menuitem" tabindex="-1" href="pages-signin.html"><i class="fa fa-power-off"></i> Logout</a>
-                    </li>
-                </ul>
             </div>
         </div>
     </div>
-    <!-- end: search & user box -->
 </header>
+
+{{-- 
+<div class="page-header d-print-none">
+    <div class="container-xl">
+        <div class="row g-2 align-items-center">
+            <div class="col">
+                <!-- Page pre-title -->
+                <div class="page-pretitle">
+                    Overview
+                </div>
+                <h2 class="page-title">
+                    Vertical transparent layout
+                </h2>
+            </div>
+            <!-- Page title actions -->
+            <div class="col-auto ms-auto d-print-none">
+                <div class="btn-list">
+                    <span class="d-none d-sm-inline">
+                        <a href="#" class="btn">
+                            view user
+                        </a>
+                    </span>
+                    <a href="#" class="btn btn-primary d-none d-sm-inline-block"
+                        data-bs-toggle="modal" data-bs-target="#modal-report">
+                        <!-- Download SVG icon from http://tabler-icons.io/i/plus -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24"
+                            height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                            fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M5 12l14 0" />
+                        </svg>
+                        Create new report
+                    </a>
+                    <a href="#" class="btn btn-primary d-sm-none btn-icon" data-bs-toggle="modal"
+                        data-bs-target="#modal-report" aria-label="Create new report">
+                        <!-- Download SVG icon from http://tabler-icons.io/i/plus -->
+                        <svg xmlns="http://www.w3.org/2000/svg" class="icon" width="24"
+                            height="24" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"
+                            fill="none" stroke-linecap="round" stroke-linejoin="round">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M12 5l0 14" />
+                            <path d="M5 12l14 0" />
+                        </svg>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> --}}

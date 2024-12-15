@@ -11,9 +11,7 @@ class Kernel extends ConsoleKernel
 
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('tahun-ajaran:generate')
-                 ->yearly()
-                 ->onJuly(1); // Eksekusi setiap 1 Juli
+        $schedule->command('tahun-ajaran:generate')->yearlyOn(1, '00:00');
     }
 
 }

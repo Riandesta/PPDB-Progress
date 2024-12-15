@@ -12,8 +12,8 @@ class KelasController extends Controller
 
     public function index()
     {
-        $kelasGroup  = Kelas::with('jurusan')->get();
-        return view('kelas.index', compact('kelas'));
+        $kelasGroup = Kelas::with('jurusan')->get()->groupBy('jurusan.nama');
+        return view('kelas.index', compact('kelasGroup'));
     }
 
     public function distribusi()
