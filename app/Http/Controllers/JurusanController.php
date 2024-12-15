@@ -19,7 +19,7 @@ class JurusanController extends Controller
             'nama_jurusan' => 'required',
             'kode_jurusan' => 'required|unique:jurusans',
             'deskripsi' => 'required',
-            'kapasitas_per_kelas' => 'required|numeric|min:1|max:40', // tambahkan maximum yang sesuai
+            'kapasitas_per_kelas' => 'required|numeric|min:1|max:40',
             'max_kelas' => 'required|numeric|min:1'
         ]);
 

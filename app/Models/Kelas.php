@@ -24,6 +24,10 @@ class Kelas extends Model
     {
         return $this->belongsTo(Jurusan::class);
     }
+    public function tahunAjaran()
+    {
+        return $this->belongsTo(TahunAjaran::class);
+    }
 
     // Change this from calonSiswas to calonSiswa to match the usage
     public function pendaftaran()

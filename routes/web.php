@@ -19,13 +19,14 @@ Route::get('/pengumuman', [PengumumanController::class, 'index'])->name('pengumu
 Route::middleware(['auth'])->group(function () {
     // Dashboard
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
+    
     // Resource Routes
     Route::resource('pendaftaran', PendaftaranController::class);
     Route::resource('jurusan', JurusanController::class);
     Route::resource('kelas', KelasController::class);
     Route::resource('post', PostController::class);
     Route::resource('panitia', PanitiaController::class);
+
 
     // Pendaftaran Routes
     Route::get('pendaftaran/export', [PendaftaranController::class, 'export'])->name('pendaftaran.export');

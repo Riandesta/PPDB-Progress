@@ -1,12 +1,10 @@
 <?php
-
 namespace Database\Seeders;
 
-use App\Models\CalonSiswa;
+use App\Models\Pendaftaran;
 use App\Models\TahunAjaran;
 use App\Models\Jurusan;
 use App\Models\Kelas;
-use App\Models\Pendaftaran;
 use Illuminate\Database\Seeder;
 
 class CalonSiswaSeeder extends Seeder
@@ -19,87 +17,98 @@ class CalonSiswaSeeder extends Seeder
             return;
         }
 
-        $jurusan = Jurusan::first();
-        if (!$jurusan) {
+        // Ambil semua jurusan
+        $jurusans = Jurusan::all();
+        if ($jurusans->isEmpty()) {
             $this->command->error('Jurusan tidak ditemukan!');
             return;
         }
 
-        $kelas = Kelas::first();
-        if (!$kelas) {
-            $this->command->error('Kelas tidak ditemukan!');
-            return;
+        // Iterasi untuk setiap jurusan
+        foreach ($jurusans as $jurusan) {
+            // Dapatkan kelas untuk jurusan ini
+            $kelas = Kelas::where('jurusan_id', $jurusan->id)
+                         ->where('tahun_ajaran_id', $tahunAjaran->id)
+                         ->get();
+
+            if ($kelas->isEmpty()) {
+                $this->command->warn("Kelas untuk jurusan {$jurusan->nama_jurusan} tidak ditemukan!");
+                continue;
+            }
+
+            $currentKelasIndex = 0;
+            $maxPerKelas = $jurusan->kapasitas_per_kelas;
+            $totalSiswaPerJurusan = $maxPerKelas * $jurusan->max_kelas;
+
+            // Generate siswa untuk setiap jurusan
+            for ($i = 1; $i <= $totalSiswaPerJurusan; $i++) {
+                $selectedKelas = $kelas[$currentKelasIndex];
+
+                // Jika kelas sudah penuh, pindah ke kelas berikutnya
+                if ($selectedKelas->kapasitas_saat_ini >= $maxPerKelas) {
+                    $currentKelasIndex++;
+                    if ($currentKelasIndex >= $kelas->count()) {
+                        $this->command->warn("Semua kelas untuk jurusan {$jurusan->nama_jurusan} sudah penuh!");
+                        break;
+                    }
+                    $selectedKelas = $kelas[$currentKelasIndex];
+                }
+
+                // Generate NISN unik untuk setiap jurusan
+                $nisn = '2024' . str_pad($jurusan->id, 2, '0', STR_PAD_LEFT) . str_pad($i, 3, '0', STR_PAD_LEFT);
+
+                $pendaftaran = Pendaftaran::create([
+                    'NISN' => $nisn,
+                    'nama' => 'Siswa ' . $jurusan->kode_jurusan . ' ' . chr(65 + ($i % 26)) . $i,
+                    'alamat' => 'Alamat Siswa ' . $jurusan->kode_jurusan . ' ' . $i,
+                    'tgl_lahir' => '2006-03-16',
+                    'tmp_lahir' => 'Jakarta',
+                    'jenis_kelamin' => $i % 2 == 0 ? 'L' : 'P',
+                    'agama' => 'Islam',
+                    'asal_sekolah' => 'SMP ' . ($i % 5 + 1),
+                    'nama_ortu' => 'Orang Tua ' . $jurusan->kode_jurusan . ' ' . $i,
+                    'pekerjaan_ortu' => $i % 2 == 0 ? 'Wiraswasta' : 'PNS',
+                    'no_telp_ortu' => '08559930' . str_pad($i, 4, '0', STR_PAD_LEFT),
+                    'tahun_ajaran_id' => $tahunAjaran->id,
+                    'jurusan_id' => $jurusan->id,
+                    'kelas_id' => $selectedKelas->id,
+                    'status_dokumen' => true,
+                    'nilai_semester_1' => rand(75, 100),
+                    'nilai_semester_2' => rand(75, 100),
+                    'nilai_semester_3' => rand(75, 100),
+                    'nilai_semester_4' => rand(75, 100),
+                    'nilai_semester_5' => rand(75, 100),
+                    'rata_rata_nilai' => rand(75, 90),
+                    'status_seleksi' => 'Lulus'
+                ]);
+
+                // Update kapasitas kelas
+                $selectedKelas->increment('kapasitas_saat_ini');
+
+                // Generate administrasi
+                \App\Models\Administrasi::create([
+                    'pendaftaran_id' => $pendaftaran->id,
+                    'tahun_ajaran_id' => $tahunAjaran->id,
+                    'biaya_pendaftaran' => 100000,
+                    'biaya_ppdb' => 5000000,
+                    'biaya_mpls' => 250000,
+                    'biaya_awal_tahun' => 1500000,
+                    'total_bayar' => 6850000,
+                    'status_pembayaran' => 'Lunas',
+                    'is_pendaftaran_lunas' => true,
+                    'is_ppdb_lunas' => true,
+                    'is_mpls_lunas' => true,
+                    'is_awal_tahun_lunas' => true,
+                    'tanggal_bayar_pendaftaran' => now(),
+                    'tanggal_bayar_ppdb' => now(),
+                    'tanggal_bayar_mpls' => now(),
+                    'tanggal_bayar_awal_tahun' => now(),
+                ]);
+            }
+
+            $this->command->info("Data calon siswa untuk jurusan {$jurusan->nama_jurusan} berhasil dibuat!");
         }
 
-        for ($i = 1; $i <= 40; $i++) {
-            $siswas[] = [
-                'NISN' => '202401' . str_pad($i, 4, '0', STR_PAD_LEFT),
-                'nama' => 'Siswa RPL ' . $i,
-                'alamat' => 'Alamat Siswa ' . $i,
-                'tgl_lahir' => '2006-03-16',
-                'tmp_lahir' => 'Jakarta',
-                'jenis_kelamin' => $i % 2 == 0 ? 'L' : 'P',
-                'agama' => 'Buddha',
-                'asal_sekolah' => 'SMP ' . (6 + $i % 3),
-                'nama_ortu' => 'Orang Tua ' . $i,
-                'pekerjaan_ortu' => $i % 2 == 0 ? 'Wiraswasta' : 'PNS',
-                'no_telp_ortu' => '08559930' . str_pad($i, 4, '0', STR_PAD_LEFT),
-                'tahun_ajaran' => $tahunAjaran->tahun_ajaran,
-                'tahun_ajaran_id' => $tahunAjaran->id,
-                'jurusan_id' => $jurusan->id,
-                'status_dokumen' => true,
-                'nilai_semester_1' => rand(60, 100),
-                'nilai_semester_2' => rand(60, 100),
-                'nilai_semester_3' => rand(60, 100),
-                'nilai_semester_4' => rand(60, 100),
-                'nilai_semester_5' => rand(60, 100),
-                'rata_rata_nilai' => rand(70, 90),
-                'status_seleksi' => $i % 2 == 0 ? 'Lulus' : 'Tidak Lulus',
-                'kelas_id' => $kelas->id,
-            ];
-        }
-
-        foreach ($siswas as $siswa) {
-            $calonSiswa = Pendaftaran::create($siswa);
-
-            // Generate random payment status
-            $isPendaftaranLunas = rand(0, 1);
-            $isPPDBLunas = rand(0, 1);
-            $isMPLSLunas = rand(0, 1);
-            $isAwalTahunLunas = rand(0, 1);
-
-            $biayaPendaftaran = 100000;
-            $biayaPPDB = 5000000;
-            $biayaMPLS = 250000;
-            $biayaAwalTahun = 1500000;
-
-            $totalBayar = 0;
-            if ($isPendaftaranLunas) $totalBayar += $biayaPendaftaran;
-            if ($isPPDBLunas) $totalBayar += $biayaPPDB;
-            if ($isMPLSLunas) $totalBayar += $biayaMPLS;
-            if ($isAwalTahunLunas) $totalBayar += $biayaAwalTahun;
-
-            $statusPembayaran = $totalBayar >= ($biayaPendaftaran + $biayaPPDB + $biayaMPLS + $biayaAwalTahun) ? 'Lunas' : 'Belum Lunas';
-
-            \App\Models\Administrasi::create([
-                'pendaftaran_id' => $calonSiswa->id,
-                'biaya_pendaftaran' => $biayaPendaftaran,
-                'biaya_ppdb' => $biayaPPDB,
-                'biaya_mpls' => $biayaMPLS,
-                'biaya_awal_tahun' => $biayaAwalTahun,
-                'total_bayar' => $totalBayar,
-                'status_pembayaran' => $statusPembayaran,
-                'is_pendaftaran_lunas' => $isPendaftaranLunas,
-                'is_ppdb_lunas' => $isPPDBLunas,
-                'is_mpls_lunas' => $isMPLSLunas,
-                'is_awal_tahun_lunas' => $isAwalTahunLunas,
-                'tanggal_bayar_pendaftaran' => $isPendaftaranLunas ? now() : null,
-                'tanggal_bayar_ppdb' => $isPPDBLunas ? now() : null,
-                'tanggal_bayar_mpls' => $isMPLSLunas ? now() : null,
-                'tanggal_bayar_awal_tahun' => $isAwalTahunLunas ? now() : null,
-            ]);
-        }
-
-        $this->command->info('Data 40 calon siswa dengan status pembayaran bervariasi berhasil dibuat!');
+        $this->command->info('Semua data calon siswa berhasil dibuat dan didistribusikan ke kelas!');
     }
 }

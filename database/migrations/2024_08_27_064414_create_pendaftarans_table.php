@@ -24,7 +24,6 @@ return new class extends Migration
             $table->string('nama_ortu');
             $table->string('pekerjaan_ortu');
             $table->string('no_telp_ortu');
-            $table->string('tahun_ajaran');
             $table->string('foto')->nullable();
             $table->boolean('status_dokumen')->default(false);
             $table->decimal('nilai_semester_1', 5, 2)->nullable();

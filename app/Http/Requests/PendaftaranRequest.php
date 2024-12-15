@@ -29,6 +29,9 @@ class PendaftaranRequest extends FormRequest
             'foto' => 'nullable|image|max:2048', // Max 2MB
             'jurusan_id' => 'required|exists:jurusans,id',
             'tahun_ajaran_id' => 'required|exists:tahun_ajaran,id',
+            'pembayaran_awal' => 'required|numeric|min:0',
+            'metode_pembayaran' => 'required|in:tunai,transfer',
+            'bukti_pembayaran' => 'required_if:metode_pembayaran,transfer|image|max:2048',
 
             // Nilai Akademik
             'nilai_semester_1' => 'nullable|numeric|between:0,100',
@@ -75,6 +78,10 @@ class PendaftaranRequest extends FormRequest
             'jurusan_id.exists' => 'Jurusan tidak valid',
             'tahun_ajaran_id.required' => 'Tahun ajaran wajib dipilih',
             'tahun_ajaran_id.exists' => 'Tahun ajaran tidak valid',
+            'pembayaran_awal.required' => 'Jumlah pembayaran wajib diisi',
+            'pembayaran_awal.numeric' => 'Jumlah pembayaran harus berupa angka',
+            'metode_pembayaran.required' => 'Metode pembayaran wajib dipilih',
+            'bukti_pembayaran.required_if' => 'Bukti pembayaran wajib diupload untuk pembayaran transfer'
         ];
     }
 

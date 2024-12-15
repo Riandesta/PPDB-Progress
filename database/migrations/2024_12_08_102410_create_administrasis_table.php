@@ -13,11 +13,11 @@ return new class extends Migration
             $table->id();
 
             $table->foreignId('pendaftaran_id')
-            ->nullable()
-            ->constrained('pendaftarans')
-            ->onDelete('set null');
+                ->nullable()
+                ->constrained('pendaftarans')
+                ->onDelete('set null');
 
-          
+
 
             // Biaya-biaya yang harus dibayar
             $table->decimal('biaya_pendaftaran', 10, 2)->default(100000);
@@ -29,8 +29,9 @@ return new class extends Migration
             $table->decimal('total_biaya', 10, 2)
                 ->storedAs('biaya_pendaftaran + biaya_ppdb + biaya_mpls + biaya_awal_tahun');
             $table->decimal('total_bayar', 10, 2)->default(0);
-            $table->decimal('sisa_pembayaran', 10, 2)
-                ->virtualAs('total_biaya - total_bayar');
+                $table->decimal('sisa_pembayaran', 10, 2)
+    ->virtualAs('(biaya_pendaftaran + biaya_ppdb + biaya_mpls + biaya_awal_tahun) - total_bayar');
+
 
             // Status pembayaran
             $table->enum('status_pembayaran', ['Belum Lunas', 'Lunas'])
@@ -47,6 +48,10 @@ return new class extends Migration
             $table->date('tanggal_bayar_ppdb')->nullable();
             $table->date('tanggal_bayar_mpls')->nullable();
             $table->date('tanggal_bayar_awal_tahun')->nullable();
+
+            $table->string('bukti_pembayaran')->nullable();
+            $table->string('metode_pembayaran')->nullable();
+            
 
             $table->text('keterangan')->nullable();
             $table->timestamps();

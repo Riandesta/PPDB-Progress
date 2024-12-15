@@ -2,9 +2,9 @@
     <x-slot name="title">Manajemen Jurusan</x-slot>
 
     <div class="card">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             <h3 class="card-title">Daftar Jurusan</h3>
-            <button class="btn btn-primary" data-toggle="modal" data-target="#addJurusanModal">
+            <button class="btn btn-primary float-right" data-bs-toggle="modal" data-bs-target="#addJurusanModal">
                 Tambah Jurusan
             </button>
         </div>
@@ -16,6 +16,7 @@
                         <th>Nama Jurusan</th>
                         <th>Deskripsi</th>
                         <th>Kapasitas/Kelas</th>
+                        <th>Max Kelas</th>
                         <th>Aksi</th>
                     </tr>
                 </thead>
@@ -28,8 +29,8 @@
                             <td>{{ $jurusan->kapasitas_per_kelas }}</td>
                             <td>{{ $jurusan->max_kelas }}</td>
                             <td>
-                                <button class="btn btn-warning btn-sm" data-toggle="modal"
-                                    data-target="#editJurusanModal-{{ $jurusan->id }}">
+                                <button class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#editJurusanModal-{{ $jurusan->id }}">
                                     Edit
                                 </button>
                                 <form action="{{ route('jurusan.destroy', $jurusan->id) }}" method="POST"
@@ -46,12 +47,12 @@
 
                         <!-- Modal Edit Jurusan -->
                         <div class="modal fade" id="editJurusanModal-{{ $jurusan->id }}" tabindex="-1"
-                            aria-labelledby="editJurusanModalLabel" aria-hidden="true">
+                            aria-labelledby="editJurusanModalLabel-{{ $jurusan->id }}" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="editJurusanModalLabel">Edit Jurusan</h5>
-                                        <button type="button" class="btn-close" data-dismiss="modal"
+                                        <h5 class="modal-title" id="editJurusanModalLabel-{{ $jurusan->id }}">Edit Jurusan</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal"
                                             aria-label="Close"></button>
                                     </div>
                                     <form action="{{ route('jurusan.update', $jurusan->id) }}" method="POST">
@@ -73,23 +74,20 @@
                                                 <textarea class="form-control" id="deskripsi" name="deskripsi" rows="3">{{ $jurusan->deskripsi }}</textarea>
                                             </div>
                                             <div class="mb-3">
-                                                <label for="kapasitas_per_kelas" class="form-label"> Max Kelas
-                                                    </label>
+                                                <label for="kapasitas_per_kelas" class="form-label">Kapasitas Per Kelas</label>
                                                 <input type="number" class="form-control" id="kapasitas_per_kelas"
                                                     name="kapasitas_per_kelas"
                                                     value="{{ $jurusan->kapasitas_per_kelas }}" required>
                                             </div>
                                             <div class="mb-3">
-                                                <label for="max_kelas" class="form-label"> Max Kelas
-                                                    </label>
+                                                <label for="max_kelas" class="form-label">Max Kelas</label>
                                                 <input type="number" class="form-control" id="max_kelas"
-                                                    name="max_kelas"
-                                                    value="{{ $jurusan->max_kelas }}" required>
+                                                    name="max_kelas" value="{{ $jurusan->max_kelas }}" required>
                                             </div>
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-secondary"
-                                                data-dismiss="modal">Batal</button>
+                                                data-bs-dismiss="modal">Batal</button>
                                             <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                                         </div>
                                     </form>
@@ -109,7 +107,7 @@
             <div class="modal-content">
                 <div class="modal-header">
                     <h5 class="modal-title" id="addJurusanModalLabel">Tambah Jurusan</h5>
-                    <button type="button" class="btn-close" data-dismiss="modal" aria-label="Close"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <form action="{{ route('jurusan.store') }}" method="POST">
                     @csrf
@@ -138,7 +136,7 @@
                         </div>
                     </div>
                     <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
                         <button type="submit" class="btn btn-primary">Simpan</button>
                     </div>
                 </form>

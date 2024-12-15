@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\Http\Controllers\Controller;
 use App\Services\PendaftaranService;
+use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\PendaftaranRequest;
 
 class PendaftaranController extends Controller
@@ -30,52 +31,43 @@ class PendaftaranController extends Controller
     }
 
     public function create()
-    {
-        $tahunAjaran = TahunAjaran::where('is_active', 'aktif')->first();
+{
+    // Ubah dari get() menjadi first()
+    $tahunAjaran = TahunAjaran::where('is_active', true)->first();
+    if (!$tahunAjaran) {
+        return back()->with('error', 'Tidak ada tahun ajaran yang aktif');
+    }
+
+    $jurusans = Jurusan::all();
+    return view('pendaftaran.form', compact('jurusans', 'tahunAjaran')); // Ubah nama variable
+}
+
+
+    // PendaftaranController.php
+public function store(PendaftaranRequest $request, PendaftaranService $service)
+{
+    try {
+        DB::beginTransaction();
+
+        // Validasi tahun ajaran aktif
+        $tahunAjaran = TahunAjaran::where('is_active', true)->first();
         if (!$tahunAjaran) {
-            return back()->with('error', 'Tidak ada tahun ajaran yang aktif');
+            return back()->with('error', 'Tidak ada tahun ajaran aktif');
         }
 
-        $jurusans = Jurusan::all();
-        return view('pendaftaran.form', compact('jurusans', 'tahunAjaran'));
+        // Proses pendaftaran
+        $pendaftar = $service->prosesPendaftaran($request->validated());
+
+        DB::commit();
+        return redirect()
+            ->route('pendaftaran.index')
+            ->with('success', 'Pendaftaran berhasil diproses');
+    } catch (\Exception $e) {
+        DB::rollBack();
+        return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
     }
+}
 
-    public function store(PendaftaranRequest $request, PendaftaranService $service)
-    {
-        try {
-            DB::beginTransaction();
-
-            $tahunAjaran = TahunAjaran::where('status', 'aktif')->first();
-            if (!$tahunAjaran) {
-                return back()->with('error', 'Tidak ada tahun ajaran aktif');
-            }
-
-            // Upload foto jika ada
-            if ($request->hasFile('foto')) {
-                $foto = $this->$service->handleFotoUpload($request->file('foto'));
-                $request->merge(['foto' => $foto]);
-            }
-
-            // Validasi kuota jurusan
-            $this->$service->validateJurusanKuota($request->jurusan_id);
-
-            // Tambahkan tahun ajaran ke request
-            $request->merge(['tahun_ajaran_id' => $tahunAjaran->id]);
-
-            // Proses pendaftaran
-            $pendaftar = $this->$service->prosesPendaftaran($request->validated());
-
-            DB::commit();
-            return redirect()
-                ->route('pendaftaran.index')
-                ->with('success', 'Pendaftaran berhasil diproses');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
-        }
-    }
 
     public function show(Pendaftaran $pendaftaran)
     {
@@ -95,7 +87,7 @@ class PendaftaranController extends Controller
 
     public function edit(Pendaftaran $pendaftaran)
     {
-        $tahunAjaran = TahunAjaran::where('status', 'aktif')->first();
+        $tahunAjaran = TahunAjaran::where('is_active', true)->first();
         $jurusans = Jurusan::all();
 
         return view('pendaftaran.form', [
@@ -114,29 +106,26 @@ class PendaftaranController extends Controller
     ) {
         try {
             DB::beginTransaction();
-
-            // Upload foto baru jika ada
+    
             if ($request->hasFile('foto')) {
-                // Hapus foto lama jika ada
-                $this->$service->deleteFotoIfExists($pendaftaran->foto);
+                // Hapus foto lama
+                if ($pendaftaran->foto) {
+                    Storage::delete('public/foto_siswa/' . basename($pendaftaran->foto));
+                }
 
-                // Upload foto baru
-                $foto = $this->$service->handleFotoUpload($request->file('foto'));
-                $request->merge(['foto' => $foto]);
+                $path = $request->file('foto')->store('public/foto_siswa');
+                $data['foto'] = Storage::url($path);
             }
-
-            // Update data pendaftaran
+    
             $pendaftaran->update($request->validated());
-
+    
             DB::commit();
             return redirect()
                 ->route('pendaftaran.index')
                 ->with('success', 'Data berhasil diperbarui');
         } catch (\Exception $e) {
             DB::rollBack();
-            return back()
-                ->withInput()
-                ->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
+            return back()->with('error', 'Terjadi kesalahan: ' . $e->getMessage());
         }
     }
 

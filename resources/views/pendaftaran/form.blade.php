@@ -51,23 +51,14 @@
                         @enderror
                     </div>
 
-                    <input type="hidden" name="tahun_ajaran_id" value="{{ $tahunAjarans ? $tahunAjarans->id : '' }}">
-
-                    <div class="mb-3">
-                        <label for="tahun_ajaran_id" class="form-label">Tahun Ajaran</label>
-                        <input type="text" class="form-control @error('tahun_ajaran_id') is-invalid @enderror"
-                            id="tahun_ajaran_id" name="tahun_ajaran_id"
-                            value="{{ $tahunAjarans ? $tahunAjarans->tahun_mulai . '/' . $tahunAjarans->tahun_selesai : 'Belum ada tahun ajaran aktif' }}"
-                            readonly>
-                        @error('tahun_ajaran_id')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
-                        @if (!$tahunAjarans)
-                            <div class="text-danger small mt-1">
-                                Perhatian: Tidak ada tahun ajaran yang aktif
-                            </div>
+                    <select name="tahun_ajaran_id" class="form-control" required>
+                        @if ($tahunAjaran)
+                            <option value="{{ $tahunAjaran->id }}">{{ $tahunAjaran->tahun_ajaran }}</option>
+                        @else
+                            <option value="">Tidak ada tahun ajaran aktif</option>
                         @endif
-                    </div>
+                    </select>
+
 
 
                     <div class="mb-3">
@@ -226,6 +217,89 @@
                         @enderror
                     </div>
 
+                    {{-- resources/views/pendaftaran/form.blade.php --}}
+
+                    {{-- Setelah form data pribadi, tambahkan section pembayaran --}}
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">Informasi Pembayaran</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-6">
+                                    {{-- Informasi Biaya --}}
+                                    <div class="alert alert-info">
+                                        <h6>Rincian Biaya:</h6>
+                                        <table class="table table-sm mb-0">
+                                            <tr>
+                                                <td>Biaya Pendaftaran</td>
+                                                <td>: Rp
+                                                    {{ number_format(config('ppdb.biaya_pendaftaran', 100000), 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>Biaya PPDB</td>
+                                                <td>: Rp
+                                                    {{ number_format(config('ppdb.biaya_ppdb', 5000000), 0, ',', '.') }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td><strong>Total Biaya</strong></td>
+                                                <td><strong>: Rp
+                                                        {{ number_format(config('ppdb.biaya_pendaftaran', 100000) + config('ppdb.biaya_ppdb', 5000000), 0, ',', '.') }}</strong>
+                                                </td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    {{-- Form Pembayaran --}}
+                                    <div class="mb-3">
+                                        <label class="form-label">Jumlah Pembayaran Awal</label>
+                                        <input type="number" name="pembayaran_awal"
+                                            class="form-control @error('pembayaran_awal') is-invalid @enderror"
+                                            value="{{ old('pembayaran_awal') }}"
+                                            min="{{ config('ppdb.minimum_pembayaran', 100000) }}" required>
+                                        @error('pembayaran_awal')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="text-muted">Minimal pembayaran: Rp
+                                            {{ number_format(config('ppdb.minimum_pembayaran', 100000), 0, ',', '.') }}</small>
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label">Metode Pembayaran</label>
+                                        <select name="metode_pembayaran"
+                                            class="form-select @error('metode_pembayaran') is-invalid @enderror"
+                                            required>
+                                            <option value="">Pilih Metode Pembayaran</option>
+                                            <option value="tunai"
+                                                {{ old('metode_pembayaran') == 'tunai' ? 'selected' : '' }}>Tunai
+                                            </option>
+                                            <option value="transfer"
+                                                {{ old('metode_pembayaran') == 'transfer' ? 'selected' : '' }}>Transfer
+                                                Bank</option>
+                                        </select>
+                                        @error('metode_pembayaran')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                    </div>
+
+                                    <div class="mb-3" id="bukti-pembayaran-section" style="display: none;">
+                                        <label class="form-label">Bukti Transfer</label>
+                                        <input type="file" name="bukti_pembayaran"
+                                            class="form-control @error('bukti_pembayaran') is-invalid @enderror"
+                                            accept="image/*">
+                                        @error('bukti_pembayaran')
+                                            <div class="invalid-feedback">{{ $message }}</div>
+                                        @enderror
+                                        <small class="text-muted">Upload bukti transfer (max: 2MB)</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Status Dokumen -->
                     <div class="mb-3">
                         <label class="form-label">Status Dokumen</label>
@@ -249,6 +323,24 @@
                         </div>
                     </div>
                 </form>
+
+
+                @push('scripts')
+                    <script>
+                        $(document).ready(function() {
+                            // Toggle bukti pembayaran berdasarkan metode pembayaran
+                            $('select[name="metode_pembayaran"]').change(function() {
+                                if ($(this).val() == 'transfer') {
+                                    $('#bukti-pembayaran-section').show();
+                                    $('input[name="bukti_pembayaran"]').prop('required', true);
+                                } else {
+                                    $('#bukti-pembayaran-section').hide();
+                                    $('input[name="bukti_pembayaran"]').prop('required', false);
+                                }
+                            });
+                        });
+                    </script>
+                @endpush
 
                 @push('scripts')
                     <script>

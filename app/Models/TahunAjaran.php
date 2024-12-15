@@ -10,7 +10,7 @@ class TahunAjaran extends Model
     protected $table = 'tahun_ajaran';
 
     protected $fillable = [
-       'tahun_ajaran',
+        'tahun_ajaran',
         'tahun_mulai',
         'tahun_selesai',
         'is_active',
@@ -28,9 +28,12 @@ class TahunAjaran extends Model
     {
         return $this->hasOne(Pendaftaran::class);
     }
+    public function kelas()
+    {
+        return $this->hasOne(Kelas::class);
+    }
     public function administrasi()
     {
         return $this->hasOne(Administrasi::class);
-
     }
 }

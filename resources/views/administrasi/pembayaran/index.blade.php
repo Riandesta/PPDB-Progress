@@ -43,49 +43,62 @@
                             </tr>
                         </thead>
                         <tbody>
-                            @foreach($administrasi as $index => $item)
-                            <tr>
-                                <td>{{ $index + 1 }}</td>
-                                <td>{{ $item->pendaftaran->nama }}</td>
-                                <td>Rp {{ number_format($item->total_bayar, 0, ',', '.') }}</td>
-                                <td>
-                                    <span class="badge {{ $item->status === 'Lunas' ? 'bg-success' : 'bg-warning' }}">
-                                        {{ $item->status }}
-                                    </span>
-                                </td>
-                                <td>
-                                    <ul class="list-unstyled">
-                                        <li>Pendaftaran: 
-                                            <span class="badge {{ $item->is_pendaftaran_lunas ? 'bg-success' : 'bg-warning' }}">
-                                                {{ $item->is_pendaftaran_lunas ? 'Lunas' : 'Belum Lunas' }}
-                                            </span>
-                                        </li>
-                                        <li>PPDB: 
-                                            <span class="badge {{ $item->is_ppdb_lunas ? 'bg-success' : 'bg-warning' }}">
-                                                {{ $item->is_ppdb_lunas ? 'Lunas' : 'Belum Lunas' }}
-                                            </span>
-                                        </li>
-                                        <li>MPLS: 
-                                            <span class="badge {{ $item->is_mpls_lunas ? 'bg-success' : 'bg-warning' }}">
-                                                {{ $item->is_mpls_lunas ? 'Lunas' : 'Belum Lunas' }}
-                                            </span>
-                                        </li>
-                                        <li>Awal Tahun: 
-                                            <span class="badge {{ $item->is_awal_tahun_lunas ? 'bg-success' : 'bg-warning' }}">
-                                                {{ $item->is_awal_tahun_lunas ? 'Lunas' : 'Belum Lunas' }}
-                                            </span>
-                                        </li>
-                                    </ul>
-                                </td>
-                                <td>
-                                    <button class="btn btn-primary btn-sm" onclick="editPembayaran({{ $item->id }})">
-                                        <i class="fas fa-edit"></i> Edit
-                                    </button>
-                                    <button class="btn btn-info btn-sm" onclick="detailPembayaran({{ $item->id }})">
-                                        <i class="fas fa-info-circle"></i> Detail
-                                    </button>
-                                </td>
-                            </tr>
+                            @foreach ($administrasi as $index => $item)
+                                <tr>
+                                    <td>{{ $index + 1 }}</td>
+                                    <td>{{ $item->pendaftaran->nama ?? 'Data tidak tersedia' }}</td>
+                                    <td>{{ $item->pendaftaran->jurusan->nama_jurusan ?? 'Jurusan tidak tersedia' }}</td>
+                                    <td>Rp {{ number_format($item->total_bayar, 0, ',', '.') }}</td>
+                                    <td>
+
+                                        <span
+                                            class="badge {{ $item->status_pembayaran == 'Lunas' ? 'bg-success' : 'bg-warning' }}">
+                                            {{ $item->status_pembayaran }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <ul class="list-unstyled">
+                                            <li>Pendaftaran:
+                                                <span
+                                                    class="badge {{ $item->is_pendaftaran_lunas ? 'bg-success' : 'bg-warning' }}">
+                                                    {{ $item->is_pendaftaran_lunas ? 'Lunas' : 'Belum Lunas' }}
+                                                </span>
+                                            </li>
+                                            <li>PPDB:
+                                                <span
+                                                    class="badge {{ $item->is_ppdb_lunas ? 'bg-success' : 'bg-warning' }}">
+                                                    {{ $item->is_ppdb_lunas ? 'Lunas' : 'Belum Lunas' }}
+                                                </span>
+                                            </li>
+                                            <li>MPLS:
+                                                <span
+                                                    class="badge {{ $item->is_mpls_lunas ? 'bg-success' : 'bg-warning' }}">
+                                                    {{ $item->is_mpls_lunas ? 'Lunas' : 'Belum Lunas' }}
+                                                </span>
+                                            </li>
+                                            <li>Awal Tahun:
+                                                <span
+                                                    class="badge {{ $item->is_awal_tahun_lunas ? 'bg-success' : 'bg-warning' }}">
+                                                    {{ $item->is_awal_tahun_lunas ? 'Lunas' : 'Belum Lunas' }}
+                                                </span>
+                                            </li>
+                                        </ul>
+                                    </td>
+                                    <td>
+                                        <div class="btn-group">
+                                            {{-- <a href="{{ route('administrasi.show', $item->id) }}" class="btn btn-sm btn-info">
+                                                <i class="fas fa-eye"></i>
+                                            </a> --}}
+                                        <button class="btn btn-primary btn-sm"
+                                            onclick="editPembayaran({{ $item->id }})">
+                                            <i class="fas fa-edit"></i> Edit
+                                        </button>
+                                        <button class="btn btn-info btn-sm"
+                                            onclick="detailPembayaran({{ $item->id }})">
+                                            <i class="fas fa-info-circle"></i> Detail
+                                        </button>
+                                    </td>
+                                </tr>
                             @endforeach
                         </tbody>
                     </table>
@@ -95,40 +108,40 @@
     </div>
 
     @push('scripts')
-    <script>
-        $(document).ready(function() {
-            const table = $('#datatable-pembayaran').DataTable({
-                dom: 'Bfrtip',
-                buttons: ['excel', 'pdf', 'print']
+        <script>
+            $(document).ready(function() {
+                const table = $('#datatable-pembayaran').DataTable({
+                    dom: 'Bfrtip',
+                    buttons: ['excel', 'pdf', 'print']
+                });
+
+                $('#filter_status, #filter_jenis').on('change', function() {
+                    table.draw();
+                });
+
+                $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                    const status = $('#filter_status').val();
+                    const jenis = $('#filter_jenis').val();
+
+                    if (!status && !jenis) return true;
+
+                    const rowStatus = data[3];
+                    const rowJenis = data[4];
+
+                    const statusMatch = !status || rowStatus.includes(status);
+                    const jenisMatch = !jenis || rowJenis.toLowerCase().includes(jenis);
+
+                    return statusMatch && jenisMatch;
+                });
             });
 
-            $('#filter_status, #filter_jenis').on('change', function() {
-                table.draw();
-            });
+            function editPembayaran(id) {
+                window.location.href = `/administrasi/pembayaran/${id}/edit`;
+            }
 
-            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
-                const status = $('#filter_status').val();
-                const jenis = $('#filter_jenis').val();
-                
-                if (!status && !jenis) return true;
-                
-                const rowStatus = data[3];
-                const rowJenis = data[4];
-                
-                const statusMatch = !status || rowStatus.includes(status);
-                const jenisMatch = !jenis || rowJenis.toLowerCase().includes(jenis);
-                
-                return statusMatch && jenisMatch;
-            });
-        });
-
-        function editPembayaran(id) {
-            window.location.href = `/administrasi/pembayaran/${id}/edit`;
-        }
-
-        function detailPembayaran(id) {
-            window.location.href = `/administrasi/pembayaran/${id}`;
-        }
-    </script>
+            function detailPembayaran(id) {
+                window.location.href = `/administrasi/pembayaran/${id}`;
+            }
+        </script>
     @endpush
 </x-layout>

@@ -10,50 +10,62 @@ use Illuminate\Support\Facades\DB;
 
 class KelasService
 {
+    public function distributeStudents() {
+        $lulusSiswa = Pendaftaran::where('status_seleksi', 'Lulus')
+            ->whereNull('kelas_id')
+            ->get();
+            
+        foreach($lulusSiswa as $siswa) {
+            $this->assignToBalancedClass($siswa);
+        }
+    }
+    private function assignToBalancedClass($siswa) {
+        $firstLetter = strtoupper(substr($siswa->nama, 0, 1));
+        $jurusan = $siswa->jurusan;
+        
+        // Hitung distribusi huruf di setiap kelas
+        $kelasDistribution = Kelas::where('jurusan_id', $jurusan->id)
+            ->where('tahun_ajaran_id', $siswa->tahun_ajaran_id)
+            ->get()
+            ->map(function($kelas) use ($firstLetter) {
+                return [
+                    'kelas' => $kelas,
+                    'count' => $kelas->pendaftaran()
+                        ->whereRaw('UPPER(LEFT(nama, 1)) = ?', [$firstLetter])
+                        ->count()
+                ];
+            });
+             // Pilih kelas dengan distribusi terendah
+        $targetKelas = $kelasDistribution
+        ->sortBy('count')
+        ->first()['kelas'];
+        
+    // Assign siswa ke kelas
+    $siswa->update(['kelas_id' => $targetKelas->id]);
+}
     public function assignSiswaToPendaftaran(Pendaftaran $pendaftaran): bool
     {
-        try {
-            $jurusan = Jurusan::findOrFail($pendaftaran->jurusan_id);
-
-            // Hitung total kelas yang tersedia
-            $totalKelas = Kelas::where('jurusan_id', $pendaftaran->jurusan_id)
-                ->where('tahun_ajaran', $pendaftaran->tahun_ajaran)
-                ->count();
-
-            // Cek apakah sudah mencapai batas maksimum kelas
-            if ($totalKelas > $jurusan->max_kelas) {
-                // Set status seleksi menjadi PENDING
-                $pendaftaran->status_seleksi = 'PENDING';
-                $pendaftaran->save();
-                return false;
-            }
-
-            // Cari kelas yang tersedia
-            $kelas = $this->findOrCreateBalancedKelas(
-                $pendaftaran->jurusan_id,
-                $pendaftaran->tahun_ajaran,
-                $pendaftaran->nama
-            );
-
-            if (!$kelas || $kelas->is_full) {
-                // Set status seleksi menjadi PENDING
-                $pendaftaran->status_seleksi = 'PENDING';
-                $pendaftaran->save();
-                return false;
-            }
-
-            // Update siswa dengan kelas_id
-            $pendaftaran->kelas_id = $kelas->id;
-            $pendaftaran->save();
-
-            // Update kapasitas kelas
-            $kelas->increment('kapasitas_saat_ini');
-
-            return true;
-        } catch (\Exception $e) {
-            Log::error('Error assigning siswa to kelas: ' . $e->getMessage());
+        // Tambahkan pengecekan administrasi
+        if ($pendaftaran->status_seleksi !== 'Lulus' ||
+            !$pendaftaran->administrasi ||
+            !$pendaftaran->administrasi->isFullyPaid()) {
             return false;
         }
+
+        $kelas = $this->findOrCreateBalancedKelas(
+            $pendaftaran->jurusan_id,
+            $pendaftaran->tahun_ajaran,
+            $pendaftaran->nama
+        );
+
+        if (!$kelas) {
+            return false;
+        }
+
+        $pendaftaran->update(['kelas_id' => $kelas->id]);
+        $kelas->increment('kapasitas_saat_ini');
+
+        return true;
     }
 
     private function findOrCreateBalancedKelas($jurusanId, $tahunAjaran, $namaSiswa)

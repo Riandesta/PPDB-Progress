@@ -26,7 +26,9 @@ class Administrasi extends Model
         'tanggal_bayar_mpls',
         'tanggal_bayar_awal_tahun',
         'keterangan',
-        'tahun_ajaran_id'
+        'tahun_ajaran_id',
+        'bukti_pembayaran',
+        'metode_pembayaran'
     ];
 
     protected $casts = [
@@ -63,7 +65,7 @@ class Administrasi extends Model
         $this->sisa_pembayaran = $this->total_biaya - $this->total_bayar;
 
         // Update status komponen yang dibayar
-        switch($jenisBiaya) {
+        switch ($jenisBiaya) {
             case 'pendaftaran':
                 $this->is_pendaftaran_lunas = true;
                 $this->tanggal_bayar_pendaftaran = now();
@@ -96,19 +98,14 @@ class Administrasi extends Model
     public function getTotalBiayaAttribute()
     {
         return $this->biaya_pendaftaran +
-               $this->biaya_ppdb +
-               $this->biaya_mpls +
-               $this->biaya_awal_tahun;
+            $this->biaya_ppdb +
+            $this->biaya_mpls +
+            $this->biaya_awal_tahun;
     }
 
     public function getSisaPembayaranAttribute()
     {
         return $this->total_biaya - $this->total_bayar;
-    }
-
-    public function isFullyPaid()
-    {
-        return $this->status_pembayaran === 'Lunas';
     }
 
     public function getStatusPembayaranLengkapAttribute()
@@ -121,5 +118,11 @@ class Administrasi extends Model
         if ($this->is_awal_tahun_lunas) $status[] = 'Awal Tahun';
 
         return empty($status) ? 'Belum ada pembayaran' : implode(', ', $status) . ' telah lunas';
+    }
+
+    public function isFullyPaid(): bool
+    {
+        return $this->status_pembayaran === 'Lunas' &&
+            $this->jumlah_dibayar >= $this->total_biaya;
     }
 }

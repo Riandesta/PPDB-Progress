@@ -4,14 +4,13 @@
 namespace App\Services;
 
 use App\Models\KuotaPPDB;
-use Faker\Provider\Image;
 use App\Models\Pendaftaran;
 use App\Models\TahunAjaran;
-use Nette\Utils\Image as foto;
 use App\Models\Administrasi;
 use App\Services\KelasService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Intervention\Image\Facades\Image;
 use Illuminate\Support\Facades\Storage;
 
 class PendaftaranService
@@ -26,54 +25,73 @@ class PendaftaranService
     public function prosesPendaftaran($data)
     {
         return DB::transaction(function () use ($data) {
-            // Handle upload foto jika ada
-            if (isset($data['foto'])) {
-                $data['foto'] = $data['foto']->store('public/foto-siswa');
+            try {
+                // Handle upload foto
+                if (isset($data['foto'])) {
+                    $data['foto'] = $this->handleFotoUpload($data['foto']);
+                }
+
+                // Hitung rata-rata nilai
+                $data['rata_rata_nilai'] = $this->hitungRataRata([
+                    $data['nilai_semester_1'] ?? 0,
+                    $data['nilai_semester_2'] ?? 0,
+                    $data['nilai_semester_3'] ?? 0,
+                    $data['nilai_semester_4'] ?? 0,
+                    $data['nilai_semester_5'] ?? 0
+                ]);
+
+                // Cek kuota
+                $kuota = KuotaPPDB::where('tahun_ajaran_id', $data['tahun_ajaran_id'])
+                    ->where('jurusan_id', $data['jurusan_id'])
+                    ->first();
+
+                // Tentukan status seleksi
+                $data['status_seleksi'] = $this->determineSelectionStatus(
+                    $kuota?->isKuotaAvailable() ?? false,
+                    $data['rata_rata_nilai']
+                );
+
+                // Buat pendaftaran
+                $pendaftaran = Pendaftaran::create($data);
+
+                // Buat administrasi
+                $administrasi = $this->createAdministrasi($pendaftaran);
+
+                 // Proses pembayaran awal
+                 if (isset($data['pembayaran_awal']) && $data['pembayaran_awal'] > 0) {
+                    $this->processPembayaranAwal($pendaftaran, $data['pembayaran_awal']);
+
+                    // Jika status Lulus dan pembayaran memenuhi syarat, assign ke kelas
+                    if ($data['status_seleksi'] === 'Lulus' && 
+                        $data['pembayaran_awal'] >= config('ppdb.minimum_pembayaran', 0)) {
+                        $this->kelasService->assignSiswaToPendaftaran($pendaftaran);
+                    }
+                }
+
+                return $pendaftaran->fresh();
+            } catch (\Exception $e) {
+                Log::error('Error in prosesPendaftaran: ' . $e->getMessage());
+                throw $e;
             }
-
-            // Hitung rata-rata nilai
-            $data['rata_rata_nilai'] = $this->hitungRataRata([
-                $data['nilai_semester_1'] ?? 0,
-                $data['nilai_semester_2'] ?? 0,
-                $data['nilai_semester_3'] ?? 0,
-                $data['nilai_semester_4'] ?? 0,
-                $data['nilai_semester_5'] ?? 0
-            ]);
-
-            // Cek kuota
-            $kuota = KuotaPPDB::where('tahun_ajaran_id', $data['tahun_ajaran_id'])
-                ->where('jurusan_id', $data['jurusan_id'])
-                ->first();
-
-            $data['status_seleksi'] = $this->determineSelectionStatus(
-                $kuota?->isKuotaAvailable() ?? false,
-                $data['rata_rata_nilai']
-            );
-
-            // Buat pendaftaran
-            $pendaftaran = Pendaftaran::create($data);
-
-            // Buat administrasi
-            $this->createAdministrasi($pendaftaran);
-
-            // Proses pembayaran awal jika ada
-            if (isset($data['pembayaran_awal']) && $data['pembayaran_awal'] > 0) {
-                $this->processPembayaranAwal($pendaftaran, $data['pembayaran_awal']);
-            }
-
-            return $pendaftaran;
         });
     }
+
+    
     private function createAdministrasi($pendaftaran)
     {
         return Administrasi::create([
-            'calon_siswa_id' => $pendaftaran->id,
+            'pendaftaran_id' => $pendaftaran->id, // Perbaikan nama kolom
+            'tahun_ajaran_id' => $pendaftaran->tahun_ajaran_id, // Tambahkan tahun_ajaran_id
             'biaya_pendaftaran' => config('ppdb.biaya_pendaftaran', 100000),
             'biaya_ppdb' => config('ppdb.biaya_ppdb', 5000000),
             'biaya_mpls' => config('ppdb.biaya_mpls', 250000),
             'biaya_awal_tahun' => config('ppdb.biaya_awal_tahun', 1500000),
             'total_bayar' => 0,
-            'status_pembayaran' => 'Belum Lunas'
+            'status_pembayaran' => 'Belum Lunas',
+            'is_pendaftaran_lunas' => false,
+            'is_ppdb_lunas' => false,
+            'is_mpls_lunas' => false,
+            'is_awal_tahun_lunas' => false
         ]);
     }
 
@@ -83,44 +101,80 @@ class PendaftaranService
         return count($nilai_valid) > 0 ? array_sum($nilai_valid) / count($nilai_valid) : 0;
     }
 
-    private function determineSelectionStatus(bool $kuotaAvailable, float $rataRata): string
-    {
-        if (!$kuotaAvailable) {
-            return 'Pending';
-        }
-        return $rataRata >= config('ppdb.nilai_minimum', 75) ? 'Lulus' : 'Tidak Lulus';
-    }
+   // PendaftaranService.php
+   private function determineSelectionStatus(bool $kuotaAvailable, float $rataRata): string
+   {
+       if (!$kuotaAvailable) {
+           return 'Pending';
+       }
 
-    private function processPembayaranAwal($pendaftaran, $jumlahBayar)
-    {
-        $administrasi = $pendaftaran->administrasi;
-        if ($administrasi) {
-            $administrasi->total_bayar = $jumlahBayar;
-            $administrasi->sisa_pembayaran = $administrasi->total_biaya - $jumlahBayar;
-            $administrasi->status_pembayaran = $administrasi->sisa_pembayaran <= 0 ? 'Lunas' : 'Belum Lunas';
-            $administrasi->save();
+       $nilaiMinimum = config('ppdb.nilai_minimum', 75);
+       return $rataRata >= $nilaiMinimum ? 'Lulus' : 'Tidak Lulus';
+   }
 
-            if ($jumlahBayar >= config('ppdb.minimum_pembayaran', 0)) {
-                $this->kelasService->assignSiswaToPendaftaran($pendaftaran);
-            }
+   private function processPembayaranAwal($pendaftaran, $jumlahBayar)
+{
+    $administrasi = $pendaftaran->administrasi;
+    if ($administrasi) {
+        $administrasi->total_bayar = $jumlahBayar;
+        // Hapus baris ini karena sisa_pembayaran adalah generated column
+        // $administrasi->sisa_pembayaran = $administrasi->total_biaya - $jumlahBayar;
+        
+        // Status pembayaran bisa dihitung berdasarkan total_bayar dan total_biaya
+        $totalBiaya = $administrasi->biaya_pendaftaran + 
+                      $administrasi->biaya_ppdb + 
+                      $administrasi->biaya_mpls + 
+                      $administrasi->biaya_awal_tahun;
+                      
+        $administrasi->status_pembayaran = ($jumlahBayar >= $totalBiaya) ? 'Lunas' : 'Belum Lunas';
+        
+        // Update komponen yang lunas berdasarkan jumlah pembayaran
+        if ($jumlahBayar >= $administrasi->biaya_pendaftaran) {
+            $administrasi->is_pendaftaran_lunas = true;
+            $administrasi->tanggal_bayar_pendaftaran = now();
         }
+        
+        $administrasi->save();
     }
+}
 
 private function handleFotoUpload($file)
 {
-    $fileName = time() . '_' . $file->getClientOriginalName();
-    $path = $file->storeAs('public/foto-siswa', $fileName);
-
-    // Kompres foto
-    $img = foto::make(storage_path('app/' . $path));
-    $img->resize(800, null, function ($constraint) {
-        $constraint->aspectRatio();
-        $constraint->upsize();
-    });
-    $img->save();
-
-    return $path;
+    try {
+        // Generate nama file yang unik
+        $fileName = time() . '_' . $file->getClientOriginalName();
+        
+        // Simpan file ke storage dan dapatkan path relatifnya
+        $path = $file->storeAs('foto_siswa', $fileName, 'public');
+        
+        // Return path relatif yang akan disimpan di database
+        return $path;
+        
+    } catch (\Exception $e) {
+        Log::error('Error uploading foto: ' . $e->getMessage());
+        throw new \Exception('Gagal mengupload foto');
+    }
 }
+
+public function deleteFotoIfExists($fotoPath)
+{
+    if ($fotoPath && Storage::disk('public')->exists($fotoPath)) {
+        Storage::disk('public')->delete($fotoPath);
+    }
+}
+
+public function updateStatusSeleksi(Pendaftaran $pendaftaran, string $newStatus)
+{
+    $pendaftaran->status_seleksi = $newStatus;
+    $pendaftaran->save();
+
+    if ($newStatus === 'Lulus') {
+        $this->kelasService->assignSiswaToPendaftaran($pendaftaran);
+    } else if ($pendaftaran->kelas_id) {
+        $this->kelasService->removeSiswaFromKelas($pendaftaran);
+    }
+}
+
 
 public function validateJurusanKuota($jurusanId)
     {
@@ -205,7 +259,7 @@ public function deletePendaftaran($pendaftaran)
                 Storage::delete($pendaftaran->foto);
             }
 
-           
+
             if ($pendaftaran->administrasi) {
                 $pendaftaran->administrasi->delete();
             }
@@ -224,14 +278,6 @@ public function deletePendaftaran($pendaftaran)
             throw new \Exception('Gagal menghapus data pendaftaran');
         }
     });
-}
-
-
-public function deleteFotoIfExists($fotoPath)
-{
-    if ($fotoPath && Storage::exists($fotoPath)) {
-        Storage::delete($fotoPath);
-    }
 }
 
  // Method helper untuk validasi data sebelum update

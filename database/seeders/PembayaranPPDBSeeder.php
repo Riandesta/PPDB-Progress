@@ -3,8 +3,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Administrasi;
+use App\Models\Pendaftaran;
 use App\Models\TahunAjaran;
+use App\Models\Administrasi;
 use Illuminate\Database\Seeder;
 
 class PembayaranPPDBSeeder extends Seeder
@@ -26,9 +27,9 @@ class PembayaranPPDBSeeder extends Seeder
         $biayaAwalTahun = config('ppdb.biaya_awal_tahun', 1500000);
 
         $administrasis = [];
-        
+
         // Buat data administrasi untuk setiap pendaftaran yang belum memiliki data administrasi
-        $pendaftaranTanpaAdministrasi = \App\Models\Pendaftaran::whereDoesntHave('administrasi')
+        $pendaftaranTanpaAdministrasi = Pendaftaran::whereDoesntHave('administrasi')
             ->where('tahun_ajaran_id', $tahunAjaran->id)
             ->get();
 
