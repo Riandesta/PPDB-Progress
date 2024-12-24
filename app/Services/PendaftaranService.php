@@ -23,22 +23,25 @@ class PendaftaranService
     }
 
     public function prosesPendaftaran($data)
-    {
-        return DB::transaction(function () use ($data) {
-            try {
-                // Handle upload foto
-                if (isset($data['foto'])) {
-                    $data['foto'] = $this->handleFotoUpload($data['foto']);
-                }
+{
+    return DB::transaction(function () use ($data) {
+        try {
+            // Generate daftar_id
+            $data['daftar_id'] = $this->generateDaftarId();
 
-                // Hitung rata-rata nilai
-                $data['rata_rata_nilai'] = $this->hitungRataRata([
-                    $data['nilai_semester_1'] ?? 0,
-                    $data['nilai_semester_2'] ?? 0,
-                    $data['nilai_semester_3'] ?? 0,
-                    $data['nilai_semester_4'] ?? 0,
-                    $data['nilai_semester_5'] ?? 0
-                ]);
+            // Handle upload foto
+            if (isset($data['foto'])) {
+                $data['foto'] = $this->handleFotoUpload($data['foto']);
+            }
+
+            // Hitung rata-rata nilai
+            $data['rata_rata_nilai'] = $this->hitungRataRata([
+                $data['nilai_semester_1'] ?? 0,
+                $data['nilai_semester_2'] ?? 0,
+                $data['nilai_semester_3'] ?? 0,
+                $data['nilai_semester_4'] ?? 0,
+                $data['nilai_semester_5'] ?? 0
+            ]);
 
                 // Cek kuota
                 $kuota = KuotaPPDB::where('tahun_ajaran_id', $data['tahun_ajaran_id'])
@@ -62,7 +65,7 @@ class PendaftaranService
                     $this->processPembayaranAwal($pendaftaran, $data['pembayaran_awal']);
 
                     // Jika status Lulus dan pembayaran memenuhi syarat, assign ke kelas
-                    if ($data['status_seleksi'] === 'Lulus' && 
+                    if ($data['status_seleksi'] === 'Lulus' &&
                         $data['pembayaran_awal'] >= config('ppdb.minimum_pembayaran', 0)) {
                         $this->kelasService->assignSiswaToPendaftaran($pendaftaran);
                     }
@@ -76,16 +79,20 @@ class PendaftaranService
         });
     }
 
-    
+
     private function createAdministrasi($pendaftaran)
     {
+        // Ambil tahun ajaran untuk mendapatkan biaya-biaya
+        $tahunAjaran = TahunAjaran::findOrFail($pendaftaran->tahun_ajaran_id);
+
         return Administrasi::create([
-            'pendaftaran_id' => $pendaftaran->id, // Perbaikan nama kolom
-            'tahun_ajaran_id' => $pendaftaran->tahun_ajaran_id, // Tambahkan tahun_ajaran_id
-            'biaya_pendaftaran' => config('ppdb.biaya_pendaftaran', 100000),
-            'biaya_ppdb' => config('ppdb.biaya_ppdb', 5000000),
-            'biaya_mpls' => config('ppdb.biaya_mpls', 250000),
-            'biaya_awal_tahun' => config('ppdb.biaya_awal_tahun', 1500000),
+            'pendaftaran_id' => $pendaftaran->id,
+            'tahun_ajaran_id' => $pendaftaran->tahun_ajaran_id,
+            'no_bayar' => 'BYR' . date('Ymd') . str_pad($pendaftaran->id, 4, '0', STR_PAD_LEFT),
+            'biaya_pendaftaran' => $tahunAjaran->biaya_pendaftaran,
+            'biaya_ppdb' => $tahunAjaran->biaya_ppdb,
+            'biaya_mpls' => $tahunAjaran->biaya_mpls,
+            'biaya_awal_tahun' => $tahunAjaran->biaya_awal_tahun,
             'total_bayar' => 0,
             'status_pembayaran' => 'Belum Lunas',
             'is_pendaftaran_lunas' => false,
@@ -94,6 +101,8 @@ class PendaftaranService
             'is_awal_tahun_lunas' => false
         ]);
     }
+
+
 
     private function hitungRataRata(array $nilai): float
     {
@@ -113,43 +122,67 @@ class PendaftaranService
    }
 
    private function processPembayaranAwal($pendaftaran, $jumlahBayar)
-{
-    $administrasi = $pendaftaran->administrasi;
-    if ($administrasi) {
-        $administrasi->total_bayar = $jumlahBayar;
-        // Hapus baris ini karena sisa_pembayaran adalah generated column
-        // $administrasi->sisa_pembayaran = $administrasi->total_biaya - $jumlahBayar;
-        
-        // Status pembayaran bisa dihitung berdasarkan total_bayar dan total_biaya
-        $totalBiaya = $administrasi->biaya_pendaftaran + 
-                      $administrasi->biaya_ppdb + 
-                      $administrasi->biaya_mpls + 
-                      $administrasi->biaya_awal_tahun;
-                      
-        $administrasi->status_pembayaran = ($jumlahBayar >= $totalBiaya) ? 'Lunas' : 'Belum Lunas';
-        
-        // Update komponen yang lunas berdasarkan jumlah pembayaran
-        if ($jumlahBayar >= $administrasi->biaya_pendaftaran) {
-            $administrasi->is_pendaftaran_lunas = true;
-            $administrasi->tanggal_bayar_pendaftaran = now();
-        }
-        
-        $administrasi->save();
-    }
-}
+   {
+       $administrasi = $pendaftaran->administrasi;
+       if (!$administrasi) {
+           throw new \Exception('Data administrasi tidak ditemukan');
+       }
+
+       return DB::transaction(function () use ($administrasi, $jumlahBayar) {
+           // Update total pembayaran
+           $administrasi->total_bayar = $jumlahBayar;
+
+           // Hitung total biaya
+           $totalBiaya = $administrasi->biaya_pendaftaran +
+                         $administrasi->biaya_ppdb +
+                         $administrasi->biaya_mpls +
+                         $administrasi->biaya_awal_tahun;
+
+           // Update status komponen pembayaran
+           if ($jumlahBayar >= $administrasi->biaya_pendaftaran) {
+               $administrasi->is_pendaftaran_lunas = true;
+               $administrasi->tanggal_bayar_pendaftaran = now();
+
+               $sisaBayar = $jumlahBayar - $administrasi->biaya_pendaftaran;
+
+               if ($sisaBayar >= $administrasi->biaya_ppdb) {
+                   $administrasi->is_ppdb_lunas = true;
+                   $administrasi->tanggal_bayar_ppdb = now();
+                   $sisaBayar -= $administrasi->biaya_ppdb;
+
+                   if ($sisaBayar >= $administrasi->biaya_mpls) {
+                       $administrasi->is_mpls_lunas = true;
+                       $administrasi->tanggal_bayar_mpls = now();
+                       $sisaBayar -= $administrasi->biaya_mpls;
+
+                       if ($sisaBayar >= $administrasi->biaya_awal_tahun) {
+                           $administrasi->is_awal_tahun_lunas = true;
+                           $administrasi->tanggal_bayar_awal_tahun = now();
+                       }
+                   }
+               }
+           }
+
+           $administrasi->status_pembayaran = ($jumlahBayar >= $totalBiaya) ? 'Lunas' : 'Belum Lunas';
+           $administrasi->save();
+
+           return $administrasi;
+       });
+   }
+
 
 private function handleFotoUpload($file)
 {
     try {
         // Generate nama file yang unik
         $fileName = time() . '_' . $file->getClientOriginalName();
-        
+
         // Simpan file ke storage dan dapatkan path relatifnya
         $path = $file->storeAs('foto_siswa', $fileName, 'public');
-        
+
         // Return path relatif yang akan disimpan di database
         return $path;
-        
+
     } catch (\Exception $e) {
         Log::error('Error uploading foto: ' . $e->getMessage());
         throw new \Exception('Gagal mengupload foto');
@@ -161,6 +194,26 @@ public function deleteFotoIfExists($fotoPath)
     if ($fotoPath && Storage::disk('public')->exists($fotoPath)) {
         Storage::disk('public')->delete($fotoPath);
     }
+}
+private function generateDaftarId()
+{
+    $tahun = date('Y');
+    $bulan = date('m');
+    $prefix = "PPDB{$tahun}{$bulan}";
+
+    // Ambil nomor urut terakhir
+    $lastNumber = Pendaftaran::where('daftar_id', 'like', $prefix . '%')
+        ->orderBy('daftar_id', 'desc')
+        ->first();
+
+    if ($lastNumber) {
+        $increment = intval(substr($lastNumber->daftar_id, -4)) + 1;
+    } else {
+        $increment = 1;
+    }
+
+    // Format: PPDB202412xxxx (contoh: PPDB2024120001)
+    return $prefix . str_pad($increment, 4, '0', STR_PAD_LEFT);
 }
 
 public function updateStatusSeleksi(Pendaftaran $pendaftaran, string $newStatus)

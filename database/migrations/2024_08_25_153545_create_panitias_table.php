@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('panitias', function (Blueprint $table) {
             $table->id();
+            $table->string('username');
+            $table->string('password');
             $table->string('nama');
             $table->string('jabatan');
             $table->string('unit');
@@ -21,6 +23,9 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('foto')->nullable();
             $table->timestamps();
+
+
+
         });
     }
 

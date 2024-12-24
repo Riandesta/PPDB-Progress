@@ -1,9 +1,10 @@
 <?php
-// app/Models/Administrasi.php
 
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Administrasi extends Model
 {
@@ -11,118 +12,62 @@ class Administrasi extends Model
     protected $table = 'administrasis';
     protected $fillable = [
         'pendaftaran_id',
+        'no_bayar',
+        'tahun_ajaran_id',
         'biaya_pendaftaran',
         'biaya_ppdb',
         'biaya_mpls',
         'biaya_awal_tahun',
+        'total_biaya',
         'total_bayar',
+        'sisa_pembayaran',
         'status_pembayaran',
-        'is_pendaftaran_lunas',
-        'is_ppdb_lunas',
-        'is_mpls_lunas',
-        'is_awal_tahun_lunas',
-        'tanggal_bayar_pendaftaran',
-        'tanggal_bayar_ppdb',
-        'tanggal_bayar_mpls',
-        'tanggal_bayar_awal_tahun',
         'keterangan',
-        'tahun_ajaran_id',
-        'bukti_pembayaran',
-        'metode_pembayaran'
+        'sisa_pembayaran',
     ];
 
+
+
     protected $casts = [
-        'is_pendaftaran_lunas' => 'boolean',
-        'is_ppdb_lunas' => 'boolean',
-        'is_mpls_lunas' => 'boolean',
-        'is_awal_tahun_lunas' => 'boolean',
-        'tanggal_bayar_pendaftaran' => 'date',
-        'tanggal_bayar_ppdb' => 'date',
-        'tanggal_bayar_mpls' => 'date',
-        'tanggal_bayar_awal_tahun' => 'date'
+        'biaya_pendaftaran' => 'integer',
+        'biaya_ppdb' => 'integer',
+        'biaya_mpls' => 'integer',
+        'biaya_awal_tahun' => 'integer',
+        'total_biaya' => 'integer',
+        'total_bayar' => 'integer',
+        'sisa_pembayaran' => 'integer',
+       'tanggal_bayar_pendaftaran' => 'datetime',
+       'tanggal_bayar_ppdb'  => 'datetime',
+       'tanggal_bayar_mpls'  => 'datetime',
+       'tanggal_bayar_awal_tahun'  => 'datetime',
     ];
 
     public function pendaftaran()
     {
-        return $this->belongsTo(Pendaftaran::class, 'pendafatran_id', 'id');
+        return $this->belongsTo(Pendaftaran::class, 'pendaftaran_id');
     }
 
-    public function tahunAjaran()
+
+    public function tahunAjaran(): BelongsTo
     {
-        return $this->belongsTo(tahunAjaran::class, 'tahun_ajaran_id');
+        return $this->belongsTo(TahunAjaran::class);
     }
 
-    // Helper Methods
-    public function updateStatusPembayaran()
+    public function riwayatPembayaran(): HasMany
     {
-        $this->status_pembayaran = ($this->sisa_pembayaran <= 0) ? 'Lunas' : 'Belum Lunas';
+        return $this->hasMany(RiwayatPembayaran::class);
+    }
+
+    public function updateStatusPembayaran(): void
+    {
+        $this->sisa_pembayaran = $this->total_biaya - $this->total_bayar;
+        $this->status_pembayaran = $this->sisa_pembayaran <= 0 ? 'Lunas' : 'Belum Lunas';
         $this->save();
     }
 
-    public function tambahPembayaran($jumlah, $jenisBiaya, $metodePembayaran = null, $buktiPembayaran = null)
+    public function setSisaPembayaranAttribute($value)
     {
-        $this->total_bayar += $jumlah;
-        $this->sisa_pembayaran = $this->total_biaya - $this->total_bayar;
-
-        // Update status komponen yang dibayar
-        switch ($jenisBiaya) {
-            case 'pendaftaran':
-                $this->is_pendaftaran_lunas = true;
-                $this->tanggal_bayar_pendaftaran = now();
-                break;
-            case 'ppdb':
-                $this->is_ppdb_lunas = true;
-                $this->tanggal_bayar_ppdb = now();
-                break;
-            case 'mpls':
-                $this->is_mpls_lunas = true;
-                $this->tanggal_bayar_mpls = now();
-                break;
-            case 'awal_tahun':
-                $this->is_awal_tahun_lunas = true;
-                $this->tanggal_bayar_awal_tahun = now();
-                break;
-        }
-
-        if ($metodePembayaran) {
-            $this->metode_pembayaran = $metodePembayaran;
-        }
-
-        if ($buktiPembayaran) {
-            $this->bukti_pembayaran = $buktiPembayaran;
-        }
-
-        $this->updateStatusPembayaran();
-    }
-
-    public function getTotalBiayaAttribute()
-    {
-        return $this->biaya_pendaftaran +
-            $this->biaya_ppdb +
-            $this->biaya_mpls +
-            $this->biaya_awal_tahun;
-    }
-
-    public function getSisaPembayaranAttribute()
-    {
-        return $this->total_biaya - $this->total_bayar;
-    }
-
-    public function getStatusPembayaranLengkapAttribute()
-    {
-        $status = [];
-
-        if ($this->is_pendaftaran_lunas) $status[] = 'Pendaftaran';
-        if ($this->is_ppdb_lunas) $status[] = 'PPDB';
-        if ($this->is_mpls_lunas) $status[] = 'MPLS';
-        if ($this->is_awal_tahun_lunas) $status[] = 'Awal Tahun';
-
-        return empty($status) ? 'Belum ada pembayaran' : implode(', ', $status) . ' telah lunas';
-    }
-
-    public function isFullyPaid(): bool
-    {
-        return $this->status_pembayaran === 'Lunas' &&
-            $this->jumlah_dibayar >= $this->total_biaya;
+        $this->attributes['sisa_pembayaran'] = $this->biaya_pendaftaran + $this->biaya_ppdb + $this->biaya_awal_tahun + $this->biaya_mpls - $this->total_bayar;
     }
 }
+

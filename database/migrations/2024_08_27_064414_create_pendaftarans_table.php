@@ -13,7 +13,8 @@ return new class extends Migration
     {
         Schema::create('pendaftarans', function (Blueprint $table) {
             $table->id();
-            $table->string('NISN')->unique();
+            $table->string('daftar_id')->uniqid();
+            $table->string('NISN');
             $table->string('nama');
             $table->string('alamat');
             $table->date('tgl_lahir');

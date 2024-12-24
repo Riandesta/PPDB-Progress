@@ -11,14 +11,14 @@
                             <div class="col-md-4 mb-3">
                                 <div class="card">
                                     <div class="card-body">
-                                        <h5 class="card-title">{{ $kelas->nama_kelas }}</h5>
+                                        <h5 class="card-title">{{ $kelas->nama_kelas }}</h>
                                         <p class="card-text">
                                             Tahun Ajaran: {{ $kelas->tahun_ajaran }}<br>
-                                            Kapasitas: {{ $kelas->kapasitas_saat_ini }} / {{ $kelas->jurusan->kapasitas_per_kelas }}
+                                            Kapasitas: {{ $kelas->kapasitas_saat_ini }} /
+                                            {{ $kelas->jurusan->kapasitas_per_kelas ?? config('ppdb.default_kapasitas', 30) }}
                                         </p>
-                                        <a href="{{ route('kelas.show', $kelas->id) }}"
-                                           class="btn btn-info btn-sm">
-                                            <i class="fa fa-eye me-1"></i>Lihat Siswa
+                                        <a href="{{ route('kelas.show', $kelas->id) }}" class="btn btn-primary btn-sm">
+                                            Lihat Siswa
                                         </a>
                                     </div>
                                 </div>

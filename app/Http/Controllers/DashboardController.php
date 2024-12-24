@@ -6,6 +6,8 @@ use App\Models\KuotaPPDB;
 use App\Models\Pendaftaran;
 use App\Models\Administrasi;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\View\View;
 
@@ -53,6 +55,40 @@ class DashboardController extends Controller
                 1
             ) . '%'
         ];
+
+        $pendaftaranStats = Pendaftaran::select(
+            DB::raw('DATE(created_at) as tanggal'),
+            DB::raw('COUNT(*) as total')
+        )
+            ->where('created_at', '>=', now()->subDays(30))
+            ->groupBy('tanggal')
+            ->orderBy('tanggal')
+            ->get();
+
+        // Format data untuk chart
+        $labels = [];
+        $data = [];
+
+        // Isi data untuk 30 hari terakhir
+        for ($i = 30; $i >= 0; $i--) {
+            $date = now()->subDays($i)->format('Y-m-d');
+            $total = $pendaftaranStats->firstWhere('tanggal', $date)?->total ?? 0;
+
+            $labels[] = Carbon::parse($date)->format('d M');
+            $data[] = $total;
+        }
+
+        // Tambahkan ke array statistics
+        $statistics['labels'] = $labels;
+        $statistics['data'] = $data;
+
+        // Tambahkan data kumulatif
+        $statistics['data_kumulatif'] = array_reduce($data, function ($carry, $item) {
+            $last = end($carry) ?? 0;
+            $carry[] = $last + $item;
+            return $carry;
+        }, []);
+
 
         $title = 'Dashboard';
         return view('dashboard.index', compact('statistics', 'title'));

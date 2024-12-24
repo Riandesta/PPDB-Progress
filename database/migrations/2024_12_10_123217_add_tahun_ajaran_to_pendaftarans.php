@@ -17,6 +17,7 @@ return new class extends Migration
                   ->after('jurusan_id')
                   ->constrained('tahun_ajaran')
                   ->onDelete('set null');
+                  
         });
     }
 

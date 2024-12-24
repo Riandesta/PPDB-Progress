@@ -4,78 +4,70 @@ namespace App\Models;
 
 use App\Models\Jurusan;
 use App\Models\Pendaftaran;
+use App\Models\TahunAjaran;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class Kelas extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'jurusan_id',
+        'tahun_ajaran_id',
         'nama_kelas',
-        'tahun_ajaran',
         'urutan_kelas',
-        'kapasitas_saat_ini'
+        'kapasitas_saat_ini',
+        'kapasitas_max'
     ];
 
-    protected $appends = ['is_full', 'jumlah_siswa'];
+    protected $appends = ['is_full'];
 
-    public function jurusan()
-    {
-        return $this->belongsTo(Jurusan::class);
-    }
-    public function tahunAjaran()
-    {
-        return $this->belongsTo(TahunAjaran::class);
-    }
+    protected $casts = [
+        'kapasitas_saat_ini' => 'integer',
+        'kapasitas_max' => 'integer',
+    ];
 
-    // Change this from calonSiswas to calonSiswa to match the usage
-    public function pendaftaran()
-    {
-        return $this->hasMany(Pendaftaran::class);
-    }
-
-    public function getIsFullAttribute()
-    {
-        return $this->kapasitas_saat_ini >= $this->jurusan->kapasitas_per_kelas;
-    }
-
-    public function getJumlahSiswaAttribute()
-    {
-        return $this->kapasitas_saat_ini;
-    }
-    public static function createNewKelas($jurusanId, $tahunAjaran)
-    {
-        $jurusan = Jurusan::find($jurusanId);
-
-        // Tentukan nama kelas baru (misal "A", "B", dst.)
-        $existingCount = self::where('jurusan_id', $jurusanId)
-                            ->where('tahun_ajaran', $tahunAjaran)
-                            ->count();
-        $newClassName = chr(65 + $existingCount); // A, B, C, ...
-
-        return self::create([
-            'jurusan_id' => $jurusanId,
-            'nama_kelas' => "Kelas $newClassName",
-            'tahun_ajaran' => $tahunAjaran,
-            'kapasitas_saat_ini' => 0
-        ]);
-    }
-
-    public function getLetterDistribution()
+   // app/Models/Kelas.php
+public function jurusan()
 {
-    $distribution = $this->calonSiswa()
-        ->select(DB::raw('UPPER(LEFT(nama, 1)) as letter'), DB::raw('count(*) as count'))
-        ->groupBy(DB::raw('UPPER(LEFT(nama, 1))'))
-        ->orderBy('letter', 'asc') // Menambahkan pengurutan berdasarkan huruf
-        ->get()
-        ->pluck('count', 'letter')
-        ->toArray();
-
-    // Memastikan array terurut berdasarkan key (huruf)
-    ksort($distribution);
-
-    return $distribution;
+    return $this->belongsTo(Jurusan::class);
 }
 
+public function pendaftaran()
+{
+    return $this->hasMany(Pendaftaran::class);
+}
+
+public function tahunAjaran()
+{
+    return $this->belongsTo(TahunAjaran::class);
+}
+
+
+public function isKapasitasAvailable()
+{
+    return $this->kapasitas_saat_ini < $this->kapasitas_max;
+}
+
+    public function getIsFullAttribute(): bool
+    {
+        return $this->kapasitas_saat_ini >= $this->kapasitas_max;
+    }
+
+    public function scopeAvailable($query)
+    {
+        return $query->where('kapasitas_saat_ini', '<', DB::raw('kapasitas_max'));
+    }
+
+    public function scopeForJurusan($query, $jurusanId)
+    {
+        return $query->where('jurusan_id', $jurusanId);
+    }
+
+    public function scopeForTahunAjaran($query, $tahunAjaranId)
+    {
+        return $query->where('tahun_ajaran_id', $tahunAjaranId);
+    }
 }

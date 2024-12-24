@@ -3,6 +3,7 @@
         {{ $title }}
     </x-slot:title>
 
+
     <div class="container-fluid px-4">
         <!-- Statistics Cards -->
         <div class="row g-3 mb-4">
@@ -157,10 +158,10 @@
                 }
             }
         };
-    
+
         // Chart Pendaftar per Jurusan
         new Chart(document.getElementById('pendaftarPerJurusanChart'), {
-            type: 'pie', // Tambahkan tipe chart
+            type: 'pie',
             data: {
                 labels: {!! json_encode($statistics['pendaftar_per_jurusan']->pluck('jurusan.nama_jurusan')) !!},
                 datasets: [{
@@ -176,7 +177,7 @@
             },
             options: chartOptions
         });
-    
+
         // Chart Status Pembayaran
         new Chart(document.getElementById('statusPembayaranChart'), {
             type: 'bar',
@@ -204,47 +205,89 @@
                 }
             }
         });
-    
-        // Chart Pendaftaran (Main Chart)
+
+        // Chart Pendaftaran
         new Chart(document.getElementById('pendaftaranChart'), {
             type: 'line',
             data: {
-                labels: {!! json_encode($statistics['labels'] ?? []) !!},
-                datasets: [{
-                    label: 'Jumlah Pendaftar',
-                    data: {!! json_encode($statistics['data'] ?? []) !!},
-                    borderColor: 'rgba(13, 110, 253, 0.8)',
-                    backgroundColor: 'rgba(13, 110, 253, 0.1)',
-                    borderWidth: 2,
-                    fill: true
-                }]
+                labels: {!! json_encode($statistics['labels']) !!},
+                datasets: [
+                    {
+                        label: 'Pendaftar per Hari',
+                        data: {!! json_encode($statistics['data']) !!},
+                        borderColor: 'rgba(13, 110, 253, 0.8)',
+                        backgroundColor: 'rgba(13, 110, 253, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Total Kumulatif',
+                        data: {!! json_encode($statistics['data_kumulatif']) !!},
+                        borderColor: 'rgba(25, 135, 84, 0.8)',
+                        backgroundColor: 'rgba(25, 135, 84, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }
+                ]
             },
             options: {
                 ...chartOptions,
                 scales: {
                     y: {
-                        beginAtZero: true
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return value.toLocaleString('id-ID');
+                            }
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
                     }
+                },
+                plugins: {
+                    ...chartOptions.plugins,
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': ' +
+                                    context.raw.toLocaleString('id-ID') + ' pendaftar';
+                            }
+                        }
+                    }
+                },
+                interaction: {
+                    intersect: false,
+                    mode: 'index'
                 }
             }
         });
     </script>
     @endpush
-    
+
     @push('styles')
     <style>
         .card {
             transition: transform 0.2s;
         }
-    
+
+        canvas {
+            width: 100% !important;
+            height: 300px !important;
+        }
+
         .card:hover {
             transform: translateY(-5px);
         }
-    
+
         .border-start {
             border-left-width: 4px !important;
         }
-    
+
         .bg-opacity-10 {
             opacity: 0.1;
         }

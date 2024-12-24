@@ -1,47 +1,110 @@
-<x-guest-layout>
-    <!-- Session Status -->
-    <x-auth-session-status class="mb-4" :status="session('status')" />
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Login PPDB</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://fonts.googleapis.com/css?family=Lato:300,400,700,900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <!-- Add this in the <head> section of your login page or layout -->
+<meta name="csrf-token" content="{{ csrf_token() }}">
+</head>
+<body>
+<section class="ftco-section">
+    <div class="container " style="">
+        <div class="row justify-content-center  " >
+            <div class="col-md-12 col-lg-10 ">
+                <div class="wrap d-md-flex ">
+                    <!-- Welcome Section -->
+                    <div class=" text-wrap p-4 p-lg-5 text-center d-flex align-items-center">
+                        <div class="text w-100">
+                            <h2>Selamat Datang di PPDB Online</h2>
+                        </div>
+                    </div>
 
-    <form method="POST" action="{{ route('login') }}">
-        @csrf
+                    <!-- Login Form Section -->
+                    <div class="login-wrap p-4 p-lg-5 ">
+                        <div class="d-flex">
+                            <div class="w-100">
+                                <h3 class="mb-4">Sign In</h3>
+                            </div>
+                        </div>
 
-        <!-- Email Address -->
-        <div>
-            <x-input-label for="email" :value="__('Email')" />
-            <x-text-input id="email" class="block mt-1 w-full" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />
-            <x-input-error :messages="$errors->get('email')" class="mt-2" />
+                        <!-- Show validation errors if any -->
+                        @if ($errors->any())
+                        <div class="alert alert-danger">
+                            <ul>
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                        @endif
+
+                        <!-- Login Form -->
+                        <form method="POST" action="{{ route('auth.verify') }}" class="signin-form">
+                            @csrf
+                            <!-- Username Field -->
+                            <div class="form-group mb-3">
+                                <label class="label">Username</label>
+                                <input type="text"
+                                       name="username"
+                                       class="form-control @error('username') is-invalid @enderror"
+                                       value="{{ old('username') }}"
+                                       required>
+                            </div>
+
+                            <!-- Password Field -->
+                            <div class="form-group mb-3">
+                                <label class="label">Password</label>
+                                <input type="password"
+                                       name="password"
+                                       class="form-control @error('password') is-invalid @enderror"
+                                       required>
+                            </div>
+
+                            <!-- Submit Button -->
+                            <div class="form-group">
+                                <button type="submit" class="form-control btn btn-primary">
+                                    Sign In
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
         </div>
+    </div>
+</section>
+</body>
+</html>
 
-        <!-- Password -->
-        <div class="mt-4">
-            <x-input-label for="password" :value="__('Password')" />
+@push('style')
+<style>
+/* Background color of the login page */
+body {
+    background-color: #007BFF; /* Blue background */
+}
 
-            <x-text-input id="password" class="block mt-1 w-full"
-                            type="password"
-                            name="password"
-                            required autocomplete="current-password" />
+/* Form and wrap background color */
+.wrap {
+    background-color: #ffffff; /* White background for the login box */
+}
 
-            <x-input-error :messages="$errors->get('password')" class="mt-2" />
-        </div>
+/* Button styling */
+button.btn.btn-primary {
+    background-color: #007BFF; /* Blue button */
+    border-color: #007BFF; /* Button border color */
+}
 
-        <!-- Remember Me -->
-        <div class="block mt-4">
-            <label for="remember_me" class="inline-flex items-center">
-                <input id="remember_me" type="checkbox" class="rounded border-gray-300 text-indigo-600 shadow-sm focus:ring-indigo-500" name="remember">
-                <span class="ms-2 text-sm text-gray-600">{{ __('Remember me') }}</span>
-            </label>
-        </div>
+button.btn.btn-primary:hover {
+    background-color: #0056b3; /* Darker blue on hover */
+    border-color: #0056b3; /* Darker border color on hover */
+}
 
-        <div class="flex items-center justify-end mt-4">
-            @if (Route::has('password.request'))
-                <a class="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500" href="{{ route('password.request') }}">
-                    {{ __('Forgot your password?') }}
-                </a>
-            @endif
-
-            <x-primary-button class="ms-3">
-                {{ __('Log in') }}
-            </x-primary-button>
-        </div>
-    </form>
-</x-guest-layout>
+/* Label color */
+label {
+    color: #007BFF; /* Blue label text */
+}
+</style>
+@endpush

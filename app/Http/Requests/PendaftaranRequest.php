@@ -3,6 +3,7 @@
 
 namespace App\Http\Requests;
 
+use Illuminate\Validation\Rule;
 use Illuminate\Foundation\Http\FormRequest;
 
 class PendaftaranRequest extends FormRequest
@@ -14,8 +15,17 @@ class PendaftaranRequest extends FormRequest
 
     public function rules()
     {
+
+    $pendaftaranId = $this->route('pendaftarans');
         return [
-            'NISN' => 'required|string|unique:pendaftarans,NISN',
+            'NISN' => 
+                'required',
+                'string',
+                'min:10',
+                'max:10',
+
+
+            'daftar_id' => 'nullable|string|unique:pendaftarans,daftar_id',
             'nama' => 'required|string|max:255',
             'alamat' => 'required|string',
             'tgl_lahir' => 'required|date',
@@ -26,11 +36,11 @@ class PendaftaranRequest extends FormRequest
             'nama_ortu' => 'required|string|max:255',
             'pekerjaan_ortu' => 'required|string',
             'no_telp_ortu' => 'required|string',
-            'foto' => 'nullable|image|max:2048', // Max 2MB
+            'foto' => 'nullable|image|max:2048', 
             'jurusan_id' => 'required|exists:jurusans,id',
             'tahun_ajaran_id' => 'required|exists:tahun_ajaran,id',
             'pembayaran_awal' => 'required|numeric|min:0',
-            'metode_pembayaran' => 'required|in:tunai,transfer',
+            'metode_pembayaran' => 'nullable|in:tunai,transfer',
             'bukti_pembayaran' => 'required_if:metode_pembayaran,transfer|image|max:2048',
 
             // Nilai Akademik

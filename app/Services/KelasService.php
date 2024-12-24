@@ -4,170 +4,133 @@ namespace App\Services;
 
 use App\Models\Kelas;
 use App\Models\Jurusan;
-use App\Models\Pendaftaran;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class KelasService
 {
-    public function distributeStudents() {
-        $lulusSiswa = Pendaftaran::where('status_seleksi', 'Lulus')
-            ->whereNull('kelas_id')
-            ->get();
-            
-        foreach($lulusSiswa as $siswa) {
-            $this->assignToBalancedClass($siswa);
-        }
-    }
-    private function assignToBalancedClass($siswa) {
-        $firstLetter = strtoupper(substr($siswa->nama, 0, 1));
-        $jurusan = $siswa->jurusan;
-        
-        // Hitung distribusi huruf di setiap kelas
-        $kelasDistribution = Kelas::where('jurusan_id', $jurusan->id)
-            ->where('tahun_ajaran_id', $siswa->tahun_ajaran_id)
-            ->get()
-            ->map(function($kelas) use ($firstLetter) {
-                return [
-                    'kelas' => $kelas,
-                    'count' => $kelas->pendaftaran()
-                        ->whereRaw('UPPER(LEFT(nama, 1)) = ?', [$firstLetter])
-                        ->count()
-                ];
-            });
-             // Pilih kelas dengan distribusi terendah
-        $targetKelas = $kelasDistribution
-        ->sortBy('count')
-        ->first()['kelas'];
-        
-    // Assign siswa ke kelas
-    $siswa->update(['kelas_id' => $targetKelas->id]);
-}
-    public function assignSiswaToPendaftaran(Pendaftaran $pendaftaran): bool
+    public function getKelasGroupedByJurusan()
     {
-        // Tambahkan pengecekan administrasi
-        if ($pendaftaran->status_seleksi !== 'Lulus' ||
-            !$pendaftaran->administrasi ||
-            !$pendaftaran->administrasi->isFullyPaid()) {
-            return false;
-        }
-
-        $kelas = $this->findOrCreateBalancedKelas(
-            $pendaftaran->jurusan_id,
-            $pendaftaran->tahun_ajaran,
-            $pendaftaran->nama
-        );
-
-        if (!$kelas) {
-            return false;
-        }
-
-        $pendaftaran->update(['kelas_id' => $kelas->id]);
-        $kelas->increment('kapasitas_saat_ini');
-
-        return true;
+        return Jurusan::with(['kelas' => function($query) {
+            $query->withCount('pendaftaran as total_siswa');
+        }])->get()->mapWithKeys(function($jurusan) {
+            return [$jurusan->nama_jurusan => $jurusan->kelas];
+        });
     }
 
-    private function findOrCreateBalancedKelas($jurusanId, $tahunAjaran, $namaSiswa)
+    public function getKelasDetail(Kelas $kelas)
     {
-        $jurusan = Jurusan::findOrFail($jurusanId);
-        $firstLetter = strtoupper(substr($namaSiswa, 0, 1));
+        $kelas->load(['jurusan', 'pendaftaran.administrasi']);
+        $pendaftaran = $kelas->pendaftaran;
+    
+        return [
+            'statistik' => [
+                'total_siswa' => $pendaftaran->count(),
+                'siswa_laki' => $pendaftaran->where('jenis_kelamin', 'L')->count(),
+                'siswa_perempuan'    => $pendaftaran->where('jenis_kelamin', 'P')->count(),
+                'siswa_lunas' => $pendaftaran->filter(function($s) {
+                    return $s->administrasi && $s->administrasi->status_pembayaran === 'Lunas';
+                })->count(),
+                'rata_rata_nilai' => $pendaftaran->avg('rata_rata_nilai') ? round($pendaftaran->avg('rata_rata_nilai'), 2) : 0,
+            ],
+            'siswa' => $pendaftaran->sortBy('nama')->values()
+        ];
+    }
+    
 
-        // Ambil atau buat kelas pertama jika belum ada kelas
-        $existingKelas = Kelas::where('jurusan_id', $jurusanId)
-            ->where('tahun_ajaran', $tahunAjaran)
-            ->get();
+    private function calculateSiswaStatistics($kelas)
+    {
+        return [
+            'total' => $kelas->pendaftaran()->count(),
+            'kapasitas' => $kelas->jurusan->kapasitas_per_kelas,
+            'persentase_terisi' => $kelas->pendaftaran()->count() / $kelas->jurusan->kapasitas_per_kelas * 100,
+            'distribusi_jk' => $kelas->pendaftaran()
+                ->select('jenis_kelamin', DB::raw('count(*) as total'))
+                ->groupBy('jenis_kelamin')
+                ->pluck('total', 'jenis_kelamin')
+        ];
+    }
 
-        if ($existingKelas->isEmpty()) {
-            return $this->createNewKelas($jurusanId, $tahunAjaran, 1);
-        }
+    public function assignSiswaToPendaftaran($pendaftaran)
+{
+    try {
+        return DB::transaction(function () use ($pendaftaran) {
+            $firstLetter = strtoupper(substr($pendaftaran->nama, 0, 1));
 
-        // Hitung total siswa per huruf di seluruh kelas
-        $totalLetterCount = Pendaftaran::whereIn('kelas_id', $existingKelas->pluck('id'))
-            ->whereRaw('UPPER(LEFT(nama, 1)) = ?', [$firstLetter])
-            ->count();
+            // Dapatkan semua kelas untuk jurusan ini
+            $kelasCollection = Kelas::where('jurusan_id', $pendaftaran->jurusan_id)
+                ->where('tahun_ajaran_id', $pendaftaran->tahun_ajaran_id)
+                ->get();
 
-        // Hitung rata-rata ideal siswa per huruf per kelas
-        $idealLetterPerKelas = ceil($totalLetterCount / count($existingKelas));
-
-        // Cari kelas yang paling cocok
-        $targetKelas = null;
-        $minLetterCount = PHP_INT_MAX;
-
-        foreach ($existingKelas as $kelas) {
-            $letterCount = Pendaftaran::where('kelas_id', $kelas->id)
-                ->whereRaw('UPPER(LEFT(nama, 1)) = ?', [$firstLetter])
-                ->orderBy('nama', 'asc') // Menambahkan pengurutan
-                ->count();
-
-            // Cek apakah kelas masih bisa menampung siswa
-            if ($kelas->kapasitas_saat_ini < $jurusan->kapasitas_per_kelas) {
-                // Jika jumlah siswa dengan huruf yang sama masih di bawah rata-rata
-                if ($letterCount < $idealLetterPerKelas) {
-                    if ($letterCount < $minLetterCount) {
-                        $minLetterCount = $letterCount;
-                        $targetKelas = $kelas;
-                    }
-                }
+            if ($kelasCollection->isEmpty()) {
+                throw new \Exception('Tidak ada kelas tersedia untuk jurusan ini');
             }
-        }
 
-          // Jika tidak ada kelas yang cocok dan masih bisa membuat kelas baru
-        if (!$targetKelas && count($existingKelas) < $jurusan->max_kelas) {
-            $targetKelas = $this->createNewKelas(
-                $jurusanId,
-                $tahunAjaran,
-                count($existingKelas) + 1
-            );
-        }
+            // Hitung distribusi huruf di setiap kelas
+            $letterDistribution = [];
+            foreach ($kelasCollection as $kelas) {
+                $letterDistribution[$kelas->id] = $kelas->pendaftaran()
+                    ->whereRaw('UPPER(LEFT(nama, 1)) = ?', [$firstLetter])
+                    ->count();
+            }
 
-        // Jika masih tidak ada kelas yang cocok, pilih kelas dengan kapasitas paling sedikit
-        if (!$targetKelas) {
-            $targetKelas = $existingKelas->where('kapasitas_saat_ini',
-                $existingKelas->min('kapasitas_saat_ini'))->first();
-        }
+            // Pilih kelas dengan distribusi huruf paling sedikit
+            $targetKelasId = array_search(min($letterDistribution), $letterDistribution);
 
-        return $targetKelas;
-    }
+            // Update pendaftaran dengan kelas yang dipilih
+            $pendaftaran->update(['kelas_id' => $targetKelasId]);
 
+            // Update kapasitas kelas
+            Kelas::find($targetKelasId)->increment('kapasitas_saat_ini');
 
-    private function createNewKelas($jurusanId, $tahunAjaran, $urutanKelas)
-    {
-        return Kelas::create([
-            'jurusan_id' => $jurusanId,
-            'nama_kelas' => 'Kelas ' . chr(64 + $urutanKelas), // A, B, C, dst
-            'tahun_ajaran' => $tahunAjaran,
-            'urutan_kelas' => $urutanKelas,
-            'kapasitas_saat_ini' => 0
-        ]);
-    }
-
-    public function removeSiswaFromKelas($pendaftaran): bool
-    {
-        try {
-            DB::transaction(function() use ($pendaftaran) {
-                // Update siswa dengan menghapus kelas_id
-                $pendaftaran->kelas_id = null;
-                $pendaftaran->save();
-
-                // Jika ada kelas yang terkait, update kapasitasnya
-                if ($pendaftaran->kelas) {
-                    $kelas = $pendaftaran->kelas;
-                    $kelas->jumlah_siswa = $kelas->calonSiswa()->count() - 1;
-                    $kelas->save();
-                }
-            });
-
-            Log::info('Siswa berhasil dihapus dari kelas', [
-                'pendaftaran_id' => $pendaftaran->id,
-                'nama_siswa' => $pendaftaran->nama
-            ]);
+            // Clear cache
+            Cache::forget("kelas.{$targetKelasId}.detail");
 
             return true;
+        });
+    } catch (\Exception $e) {
+        Log::error('Error assigning siswa to kelas: ' . $e->getMessage());
+        throw $e;
+    }
+}
 
-        } catch (\Exception $e) {
-            Log::error('Error removing siswa from kelas: ' . $e->getMessage());
-            return false;
+public function removeSiswaFromKelas($pendaftaran)
+{
+    return DB::transaction(function () use ($pendaftaran) {
+        if ($pendaftaran->kelas_id) {
+            $kelasId = $pendaftaran->kelas_id;
+            $pendaftaran->update(['kelas_id' => null]);
+
+            // Kurangi kapasitas kelas
+            Kelas::find($kelasId)->decrement('kapasitas_saat_ini');
+
+            // Clear cache
+            Cache::forget("kelas.{$kelasId}.detail");
+
+            return true;
         }
+        return false;
+    });
+}
+
+
+    private function getSiswaBerdasarkanHuruf($kelas)
+    {
+        return $kelas->pendaftaran()
+            ->select('*', DB::raw('LEFT(nama, 1) as huruf_awal'))
+            ->orderBy('nama')
+            ->get()
+            ->groupBy('huruf_awal');
+    }
+
+    public function getAbsensiData($kelas)
+    {
+        return [
+            'kelas' => $kelas->load('jurusan', 'tahunAjaran'),
+            'siswa' => $kelas->pendaftaran()
+                ->orderBy('nama')
+                ->get()
+        ];
     }
 }

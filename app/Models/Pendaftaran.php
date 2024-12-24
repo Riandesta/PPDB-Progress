@@ -12,6 +12,7 @@ class Pendaftaran extends Model
     protected $table = 'pendaftarans';
 
     protected $fillable = [
+        'daftar_id',
         'NISN',
         'nama',
         'alamat',
@@ -24,9 +25,8 @@ class Pendaftaran extends Model
         'pekerjaan_ortu',
         'no_telp_ortu',
         'foto',
-        'tahun_ajaran_id',
         'jurusan_id',
-        'status_dokumen',
+        'tahun_ajaran_id',
         'nilai_semester_1',
         'nilai_semester_2',
         'nilai_semester_3',
@@ -35,16 +35,23 @@ class Pendaftaran extends Model
         'rata_rata_nilai',
         'status_seleksi'
     ];
-    
+
+    protected $casts = [
+        'tgl_lahir' => 'datetime',
+    ];
+
+
+
     public function administrasi()
     {
         return $this->hasOne(Administrasi::class, 'pendaftaran_id');
     }
 
     public function jurusan()
-    {
-        return $this->belongsTo(Jurusan::class);
-    }
+{
+    return $this->belongsTo(Jurusan::class);
+}
+
     public function kelas()
     {
         return $this->belongsTo(Kelas::class);

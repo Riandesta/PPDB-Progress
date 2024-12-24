@@ -1,16 +1,16 @@
 <?php
 
-namespace App\Console;
+namespace App\Http\Kernel;
+use UserMiddleware;
+use App\Http\Middleware\AdminMiddleware;
+use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
-use App\Http\Middleware\CheckRole;
-use Illuminate\Console\Scheduling\Schedule;
-use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
-
-class Kernel
+Class Kernel extends HttpKernel
 {
-protected $routeMiddleware = [
-    // ... middleware lain
-    'role' => CheckRole::class,
-];
+    protected $routeMiddleware = [
+        'user' => \App\Http\Middleware\UserMiddleware::class,
+        'admin' => \App\Http\Middleware\AdminMiddleware::class,
+        'panitia' => \App\Http\Middleware\AdminMiddleware::class,
+    ];
 
 }
