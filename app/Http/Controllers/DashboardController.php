@@ -29,11 +29,28 @@ class DashboardController extends Controller
         $totalKuota = KuotaPPDB::sum('kuota');
         $sisaKuota = max(0, $totalKuota - $totalPendaftar);
 
+        $sisaKuotaPerJurusan = KuotaPPDB::with('jurusan')
+        ->select(
+            'jurusan_id',
+            'kuota',
+            DB::raw('(
+                SELECT COUNT(*)
+                FROM pendaftarans
+                WHERE pendaftarans.jurusan_id = kuota_ppdb.jurusan_id
+            ) as terisi'),
+            DB::raw('kuota - (
+                SELECT COUNT(*)
+                FROM pendaftarans
+                WHERE pendaftarans.jurusan_id = kuota_ppdb.jurusan_id
+            ) as sisa')
+        )->get();
+
         $statistics = [
             'total_pendaftar' => $totalPendaftar,
             'total_diterima' => Pendaftaran::where('status_seleksi', 'Lulus')->count(),
             'total_pembayaran' => Administrasi::where('status_pembayaran', 'Lunas')->sum('total_bayar'),
             'sisa_kuota' => $sisaKuota,
+            'sisa_kuota_per_jurusan' => $sisaKuotaPerJurusan,
             'pendaftar_per_jurusan' => Pendaftaran::select('jurusan_id', DB::raw('count(*) as total'))
                 ->groupBy('jurusan_id')
                 ->with('jurusan')

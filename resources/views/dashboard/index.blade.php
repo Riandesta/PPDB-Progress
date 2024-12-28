@@ -117,6 +117,66 @@
             </div>
         </div>
 
+        <!-- Tambahkan setelah Main Chart dan sebelum Sub Charts Row -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header py-3">
+                <h6 class="m-0 fw-bold text-primary">
+                    <i class="fas fa-chart-bar me-1"></i> Sisa Kuota per Jurusan
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Jurusan</th>
+                                <th class="text-center">Kuota</th>
+                                <th class="text-center">Terisi</th>
+                                <th class="text-center">Sisa</th>
+                                <th class="text-center">Progress</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach($statistics['sisa_kuota_per_jurusan'] as $kuota)
+                            <tr>
+                                <td>{{ $kuota->jurusan->nama_jurusan }}</td>
+                                <td class="text-center">{{ $kuota->kuota }}</td>
+                                <td class="text-center">{{ $kuota->terisi }}</td>
+                                <td class="text-center">
+                                    <span class="badge bg-{{ $kuota->sisa > 10 ? 'success' : ($kuota->sisa > 0 ? 'warning' : 'danger') }}">
+                                        {{ $kuota->sisa }}
+                                    </span>
+                                </td>
+                                <td>
+                                    @php
+                                        $percentage = ($kuota->terisi / $kuota->kuota) * 100;
+                                        $bgColor = $percentage >= 90 ? 'danger' :
+                                                 ($percentage >= 70 ? 'warning' : 'success');
+                                    @endphp
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar bg-{{ $bgColor }}"
+                                             role="progressbar"
+                                             style="width: {{ $percentage }}%"
+                                             aria-valuenow="{{ $percentage }}"
+                                             aria-valuemin="0"
+                                             aria-valuemax="100">
+                                            {{ round($percentage) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            @endforeach
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
         <!-- Sub Charts Row -->
         <div class="row g-4">
             <div class="col-xl-6">
@@ -271,6 +331,33 @@
 
     @push('styles')
     <style>
+
+.progress {
+        background-color: #f8f9fa;
+        border-radius: 0.25rem;
+        overflow: hidden;
+    }
+
+    .progress-bar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 0.875rem;
+        font-weight: 600;
+        transition: width 0.6s ease;
+    }
+
+    .table > :not(caption) > * > * {
+        padding: 0.75rem;
+        vertical-align: middle;
+    }
+
+    .badge {
+        padding: 0.5em 0.75em;
+        font-weight: 500;
+    }
+
         .card {
             transition: transform 0.2s;
         }
