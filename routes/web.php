@@ -90,16 +90,8 @@ Route::resources([
     'post' => PostController::class,
 ]);
 
-Route::get('tahun-ajaran/', [TahunAjaranController::class, 'index'])->name('tahun-ajaran.index');
-Route::get('tahun-ajaran/show', [TahunAjaranController::class, 'show'])->name('tahun-ajaran.show');
-Route::get('tahun-ajaran/{tahunAjaran}', [TahunAjaranController::class, 'destroy'])->name('tahun-ajaran.destroy');
-Route::get('tahun-ajaran/export', [TahunAjaranController::class, 'export'])->name('tahun-ajaran.export');
 
-Route::get('tahun-ajaran/create', [TahunAjaranController::class, 'create'])->name('tahun-ajaran.create');
-Route::post('tahun-ajaran', [TahunAjaranController::class, 'store'])->name('tahun-ajaran.store');
-Route::get('tahun-ajaran/{tahunAjaran}/edit', [TahunAjaranController::class, 'edit'])->name('tahun-ajaran.edit');
-Route::put('tahun-ajaran/{tahunAjaran}', [TahunAjaranController::class, 'update'])->name('tahun-ajaran.update');
-
+Route::resource('tahun-ajaran', TahunAjaranController::class);
 
 
 // Administrasi Management

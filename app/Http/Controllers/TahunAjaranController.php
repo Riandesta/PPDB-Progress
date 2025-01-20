@@ -54,7 +54,7 @@ class TahunAjaranController extends Controller
     public function create()
     {
         $tahunAjaran = new TahunAjaran();
-        return view('tahun-ajaran.form', compact('tahunAjaran'));
+        return view('tahun-ajaran.c_form', compact('tahunAjaran'));
     }
 
 
@@ -90,7 +90,7 @@ class TahunAjaranController extends Controller
     public function edit($id)
     {
         $tahunAjaran = TahunAjaran::findOrFail($id);
-        return view('tahun-ajaran.form', compact('tahunAjaran'));
+        return view('tahun-ajaran.e_form', compact('tahunAjaran'));
     }
 
 

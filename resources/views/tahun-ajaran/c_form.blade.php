@@ -1,17 +1,12 @@
 <x-layout>
-    <x-slot name="title">{{ isset($tahunAjaran) ? 'Edit' : 'Tambah' }} Tahun Ajaran</x-slot>
-    <x-slot name="card_title">{{ isset($tahunAjaran) ? 'Edit' : 'Tambah' }} Tahun Ajaran</x-slot>
+    <x-slot name="title">Tambah Tahun Ajaran</x-slot>
+    <x-slot name="card_title">Tambah Tahun Ajaran</x-slot>
 
     <div class="container-fluid">
         <div class="card shadow-sm">
             <div class="card-body">
-                <form
-                    action="{{ isset($tahunAjaran) ? route('tahun-ajaran.store') : route('tahun-ajaran.update', $tahunAjaran->id) }}"
-                    method="POST" id="tahunAjaranForm">
+                <form action="{{ route('tahun-ajaran.store') }}" method="POST" id="tahunAjaranForm">
                     @csrf
-                    @isset($tahunAjaran)
-                        @method('PUT')
-                    @endisset
 
                     <div class="row g-4">
                         {{-- Left column - Basic Information --}}
@@ -26,8 +21,7 @@
                                         <label class="form-label required">Tahun Ajaran</label>
                                         <input type="text" name="tahun_ajaran"
                                             class="form-control @error('tahun_ajaran') is-invalid @enderror"
-                                            value="{{ old('tahun_ajaran', $tahunAjaran->tahun_ajaran ?? '') }}"
-                                            placeholder="Contoh: 2024/2025" required>
+                                            value="{{ old('tahun_ajaran') }}" placeholder="Contoh: 2024/2025" required>
                                         @error('tahun_ajaran')
                                             <div class="invalid-feedback">{{ $message }}</div>
                                         @enderror
@@ -40,8 +34,7 @@
                                                 <label class="form-label required">Tahun Mulai</label>
                                                 <input type="number" name="tahun_mulai"
                                                     class="form-control @error('tahun_mulai') is-invalid @enderror"
-                                                    value="{{ old('tahun_mulai', $tahunAjaran->tahun_mulai ?? date('Y')) }}"
-                                                    min="2000" max="2099" required>
+                                                    value="{{ old('tahun_mulai', date('Y')) }}" min="2000" max="2099" required>
                                                 @error('tahun_mulai')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -53,8 +46,7 @@
                                                 <label class="form-label required">Tahun Selesai</label>
                                                 <input type="number" name="tahun_selesai"
                                                     class="form-control @error('tahun_selesai') is-invalid @enderror"
-                                                    value="{{ old('tahun_selesai', $tahunAjaran->tahun_selesai ?? date('Y') + 1) }}"
-                                                    min="2000" max="2099" required>
+                                                    value="{{ old('tahun_selesai', date('Y') + 1) }}" min="2000" max="2099" required>
                                                 @error('tahun_selesai')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -69,8 +61,7 @@
                                                 <label class="form-label required">Tanggal Mulai</label>
                                                 <input type="date" name="tanggal_mulai"
                                                     class="form-control @error('tanggal_mulai') is-invalid @enderror"
-                                                    value="{{ old('tanggal_mulai', $tahunAjaran->tanggal_mulai ? $tahunAjaran->tanggal_mulai->format('Y-m-d') : '') }}"
-                                                    required>
+                                                    value="{{ old('tanggal_mulai') }}" required>
                                                 @error('tanggal_mulai')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -83,8 +74,7 @@
                                                 <input type="date"
                                                        name="tanggal_selesai"
                                                        class="form-control @error('tanggal_selesai') is-invalid @enderror"
-                                                       value="{{ old('tanggal_selesai', $tahunAjaran->tanggal_selesai ? $tahunAjaran->tanggal_selesai->format('Y-m-d') : '') }}"
-                                                       required>
+                                                       value="{{ old('tanggal_selesai') }}" required>
                                                 @error('tanggal_selesai')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror
@@ -111,8 +101,7 @@
                                                 <span class="input-group-text">Rp</span>
                                                 <input type="number" name="biaya_{{ $biaya }}"
                                                     class="form-control @error('biaya_' . $biaya) is-invalid @enderror"
-                                                    value="{{ old('biaya_' . $biaya, $tahunAjaran->{'biaya_' . $biaya} ?? config('ppdb.biaya_' . $biaya)) }}"
-                                                    min="0" required>
+                                                    value="{{ old('biaya_' . $biaya) }}" min="0" required>
                                             </div>
                                             @error('biaya_' . $biaya)
                                                 <div class="invalid-feedback">{{ $message }}</div>
@@ -125,7 +114,7 @@
                                             <input type="checkbox" name="is_active"
                                                 class="form-check-input @error('is_active') is-invalid @enderror"
                                                 value="1"
-                                                {{ old('is_active', $tahunAjaran->is_active ?? false) ? 'checked' : '' }}
+                                                {{ old('is_active') ? 'checked' : '' }}
                                                 id="isActiveSwitch">
                                             <label class="form-check-label" for="isActiveSwitch">
                                                 Aktifkan Tahun Ajaran Ini
@@ -146,7 +135,7 @@
                             <i class="fas fa-arrow-left me-2"></i>Kembali
                         </a>
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-save me-2"></i>{{ isset($tahunAjaran) ? 'Update' : 'Simpan' }}
+                            <i class="fas fa-save me-2"></i>Simpan
                         </button>
                     </div>
                 </form>
@@ -188,7 +177,6 @@
             });
         </script>
     @endpush
-
 
     @push('styles')
         <style>
