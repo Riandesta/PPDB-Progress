@@ -11,7 +11,7 @@
                     <table class="table table-borderless">
                         <tr>
                             <td class="font-weight-bold">No. Pembayaran</td>
-                            <td>: {{ $pembayaran->no_pembayaran }}</td>
+                            {{-- <td>: {{ $pembayaran->no_bayar }}</td> --}}
                         </tr>
                         <tr>
                             <td class="font-weight-bold">Tanggal</td>

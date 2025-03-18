@@ -2,12 +2,25 @@
     <x-slot name="title">Edit Tahun Ajaran</x-slot>
     <x-slot name="card_title">Edit Tahun Ajaran</x-slot>
 
+    <h1>{{ isset($tahunAjaran) ? 'Edit Tahun Ajaran' : 'Tambah Tahun Ajaran' }}</h1>
+
     <div class="container-fluid">
         <div class="card shadow-sm">
             <div class="card-body">
+<<<<<<< Updated upstream:resources/views/tahun-ajaran/e_form.blade.php
                 <form action="{{ route('tahun-ajaran.update', $tahunAjaran->id) }}" method="POST" id="tahunAjaranForm">
                     @csrf
                     @method('PUT')
+=======
+                <form
+                action="{{ request()->routeIs('tahun-ajaran.create') ? route('tahun-ajaran.store') : route('tahun-ajaran.update', ['tahunAjaran' => $tahunAjaran->id]) }}"
+                method="POST"
+                enctype="multipart/form-data">
+                @csrf
+                @if (request()->routeIs('tahun-ajaran.update'))
+                    @method('PUT')
+                @endif
+>>>>>>> Stashed changes:resources/views/tahun-ajaran/form.blade.php
 
                     <div class="row g-4">
                         {{-- Left column - Basic Information --}}
@@ -72,10 +85,17 @@
                                             {{-- Tanggal Selesai Input --}}
                                             <div class="mb-3">
                                                 <label class="form-label required">Tanggal Selesai</label>
+<<<<<<< Updated upstream:resources/views/tahun-ajaran/e_form.blade.php
                                                 <input type="date"
                                                        name="tanggal_selesai"
                                                        class="form-control @error('tanggal_selesai') is-invalid @enderror"
                                                        value="{{ old('tanggal_selesai', $tahunAjaran->tanggal_selesai ? $tahunAjaran->tanggal_selesai->format('Y-m-d') : '') }}" required>
+=======
+                                                <input type="date" name="tanggal_selesai"
+                                                    class="form-control @error('tanggal_selesai') is-invalid @enderror"
+                                                    value="{{ old('tanggal_selesai', $tahunAjaran->tanggal_selesai ? $tahunAjaran->tanggal_selesai->format('Y-m-d') : '') }}"
+                                                    required>
+>>>>>>> Stashed changes:resources/views/tahun-ajaran/form.blade.php
                                                 @error('tanggal_selesai')
                                                     <div class="invalid-feedback">{{ $message }}</div>
                                                 @enderror

@@ -24,15 +24,15 @@ class TahunAjaranController extends Controller
 
         return view('tahun-ajaran.index', compact('tahunAjarans'));
     }
-    public function destroy($id)
+    public function destroy(TahunAjaran $tahunAjaran)
     {
         try {
-            $tahunAjaran = TahunAjaran::findOrFail($id);
-
             // Check if there are related records
-            if ($tahunAjaran->pendaftarans()->exists() ||
+            if (
+                $tahunAjaran->pendaftarans()->exists() ||
                 $tahunAjaran->kelas()->exists() ||
-                $tahunAjaran->administrasi()->exists()) {
+                $tahunAjaran->administrasi()->exists()
+            ) {
                 return redirect()
                     ->route('tahun-ajaran.index')
                     ->with('error', 'Tidak dapat menghapus tahun ajaran karena masih memiliki data terkait.');
@@ -43,20 +43,19 @@ class TahunAjaranController extends Controller
             return redirect()
                 ->route('tahun-ajaran.index')
                 ->with('success', 'Tahun ajaran berhasil dihapus.');
-
         } catch (\Exception $e) {
             return redirect()
                 ->route('tahun-ajaran.index')
-                ->with('error', 'Terjadi kesalahan saat menghapus tahun ajaran.');
+                ->with('error', 'Terjadi kesalahan saat menghapus tahun ajaran.' . $e->getMessage());
         }
     }
+
 
     public function create()
     {
         $tahunAjaran = new TahunAjaran();
         return view('tahun-ajaran.c_form', compact('tahunAjaran'));
     }
-
 
     public function store(Request $request)
     {
@@ -79,9 +78,9 @@ class TahunAjaranController extends Controller
     public function show(TahunAjaran $tahunAjaran)
     {
         // Load pendaftarans relationship dengan data terkait
-        $tahunAjaran->load(['pendaftarans' => function($query) {
+        $tahunAjaran->load(['pendaftarans' => function ($query) {
             $query->with(['jurusan', 'administrasi'])
-                  ->latest();
+                ->latest();
         }]);
 
         return view('tahun-ajaran.show', compact('tahunAjaran'));
