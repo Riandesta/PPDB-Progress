@@ -145,7 +145,7 @@
                                 <td class="text-center">{{ $kuota->kuota }}</td>
                                 <td class="text-center">{{ $kuota->terisi }}</td>
                                 <td class="text-center">
-                                    <span class="badge bg-{{ $kuota->sisa > 10 ? 'success' : ($kuota->sisa > 0 ? 'warning' : 'danger') }}">
+                                    <span class="badge bg-{{ $kuota->sisa > 10 ? 'success' : ($kuota->sisa > 0 ? 'warning' : 'danger') }} text-white">
                                         {{ $kuota->sisa }}
                                     </span>
                                 </td>

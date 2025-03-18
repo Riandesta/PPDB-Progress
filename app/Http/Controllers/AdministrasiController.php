@@ -34,7 +34,7 @@ class AdministrasiController extends Controller
                     return 'Rp ' . number_format($row->total_bayar, 0, ',', '.');
                 })
                 ->addColumn('sisa_pembayaran_formatted', function ($row) {
-                    return 'Rp ' . number_format($row->sisa_pembayaran, 0, ',', '.');
+                    return $row->sisa_pembayaran_formatted;
                 })
                 ->addColumn('status_badge', function ($row) {
                     $badgeClass = $row->status_pembayaran == 'Lunas' ? 'bg-success' : 'bg-warning';
@@ -44,15 +44,15 @@ class AdministrasiController extends Controller
                     $html = '<div class="btn-group">';
                     if ($row->status_pembayaran != 'Lunas') {
                         $html .= '<a href="' . route('administrasi.pembayaran.bayar', $row->id) . '"
-                                    class="btn btn-primary btn-sm">
-                                    <i class="fas fa-money-bill"></i> Bayar
-                                </a>';
+                                        class="btn btn-primary btn-sm">
+                                        <i class="fas fa-money-bill"></i> Bayar
+                                    </a>';
                     }
                     $html .= '<a href="' . route('administrasi.pembayaran.detail', $row->id) . '"
-                                class="btn btn-info btn-sm">
-                                <i class="fas fa-info-circle"></i> Detail
-                            </a>
-                        </div>';
+                                    class="btn btn-info btn-sm">
+                                    <i class="fas fa-info-circle"></i> Detail
+                                </a>
+                            </div>';
                     return $html;
                 })
                 ->rawColumns(['status_badge', 'action'])
@@ -74,7 +74,8 @@ class AdministrasiController extends Controller
     public function store(Request $request, Administrasi $administrasi)
     {
         $request->validate([
-            'jenis_pembayaran' => 'required|in:pendaftaran,ppdb,mpls,awal_tahun',
+            'jenis_pembayaran' => 'required|array',
+            'jenis_pembayaran.*' => 'in:pendaftaran,ppdb,mpls,awal_tahun',
             'jumlah_bayar' => 'required|numeric|min:1',
             'metode_pembayaran' => 'required|in:tunai,transfer',
             'bukti_pembayaran' => 'required_if:metode_pembayaran,transfer|image|max:2048'

@@ -18,6 +18,7 @@ User::create([
     'role' => 'admin',
     'password' => bcrypt('admin123'),
 ]);
+
 User::create([
     'nama' => 'Panitia PPDB',
     'username' => 'panitia',

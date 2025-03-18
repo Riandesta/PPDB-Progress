@@ -10,82 +10,84 @@ class PembayaranService
 {
     public function prosesPembayaran(Administrasi $administrasi, array $data)
     {
-        // Validasi jumlah pembayaran
+        // Validasi pembayaran
         $this->validasiPembayaran($administrasi, $data);
 
         // Upload bukti pembayaran jika ada
-        if (isset($data['bukti_pembayaran'])) {
-            $data['bukti_pembayaran'] = $this->uploadBuktiPembayaran($data['bukti_pembayaran']);
-        }
+        $buktiPembayaran = isset($data['bukti_pembayaran']) ? $this->uploadBuktiPembayaran($data['bukti_pembayaran']) : null;
+
+        // Hitung total pembayaran dari komponen yang dipilih
+        $totalPembayaran = $this->hitungTotalPembayaran(
+            $administrasi,
+            $data['jenis_pembayaran'],
+            $data['jumlah_bayar']
+        );
 
         // Buat record riwayat pembayaran
-        $riwayat = $this->createRiwayatPembayaran($administrasi, $data);
+        $this->createRiwayatPembayaran($administrasi, $data['jumlah_bayar'], $data['metode_pembayaran'], $buktiPembayaran);
 
         // Update status pembayaran administrasi
-        $this->updateStatusPembayaran($administrasi, $data);
-
-
-
-        return $riwayat;
+        $this->updateStatusPembayaran($administrasi, $totalPembayaran, $data['jenis_pembayaran']);
     }
 
     private function validasiPembayaran(Administrasi $administrasi, array $data)
     {
-        $biayaKey = 'biaya_' . $data['jenis_pembayaran'];
-        $sisaBiaya = $administrasi->$biayaKey;
+        if (!isset($data['jenis_pembayaran']) || !is_array($data['jenis_pembayaran'])) {
+            throw new \Exception('Jenis pembayaran tidak valid.');
+        }
 
-        if ($data['jumlah_bayar'] > $sisaBiaya) {
-            throw new \Exception('Jumlah pembayaran melebihi sisa tagihan');
+        foreach ($data['jenis_pembayaran'] as $jenis) {
+            $biayaKey = 'biaya_' . $jenis;
+            $sisaBiaya = $administrasi->$biayaKey - $administrasi->totalBayarUntukJenis($jenis);
+
+            if ($data['jumlah_bayar'] > $sisaBiaya) {
+                throw new \Exception('Jumlah pembayaran melebihi sisa tagihan untuk ' . $jenis);
+            }
         }
     }
 
-
-
     private function uploadBuktiPembayaran($file)
     {
-        $path = $file->store('bukti-pembayaran', 'public');
-        return $path;
+        return $file->store('bukti-pembayaran', 'public');
     }
 
-    private function createRiwayatPembayaran(Administrasi $administrasi, array $data)
+    private function createRiwayatPembayaran($administrasi, $jumlahBayar, $metodePembayaran, $buktiPembayaran = null)
     {
-        return RiwayatPembayaran::create([
+        RiwayatPembayaran::create([
             'administrasi_id' => $administrasi->id,
-            'no_pembayaran' => 'BYR' . date('YmdHis') . rand(100, 999),
+            'jumlah_bayar' => $jumlahBayar,
+            'metode_pembayaran' => $metodePembayaran,
             'tanggal_bayar' => now(),
-            'jenis_pembayaran' => $data['jenis_pembayaran'],
-            'jumlah_bayar' => $data['jumlah_bayar'],
-            'metode_pembayaran' => $data['metode_pembayaran'],
-            'bukti_pembayaran' => $data['bukti_pembayaran'] ?? null,
+            'keterangan' => 'Pembayaran awal pendaftaran',
+            'bukti_pembayaran' => $buktiPembayaran,
             'status' => 'success'
         ]);
     }
 
-    private function updateStatusPembayaran(Administrasi $administrasi, array $data)
+    private function updateStatusPembayaran(Administrasi $administrasi, $totalPembayaran, $jenisPembayaran)
     {
-        $administrasi->total_bayar += $data['jumlah_bayar'];
+        $administrasi->total_bayar += $totalPembayaran;
 
-        // Update status komponen yang dibayar
-        $statusField = 'is_' . $data['jenis_pembayaran'] . '_lunas';
-        $biayaField = 'biaya_' . $data['jenis_pembayaran'];
-        $tanggalField = 'tanggal_bayar_' . $data['jenis_pembayaran'];
+        foreach ($jenisPembayaran as $jenis) {
+            $statusField = 'is_' . $jenis . '_lunas';
+            $biayaField = 'biaya_' . $jenis;
 
-        if ($administrasi->total_bayar >= $administrasi->$biayaField) {
-            $administrasi->$statusField = true;
-            $administrasi->$tanggalField = now();
+            if (!$administrasi->$statusField && $administrasi->totalBayarUntukJenis($jenis) >= $administrasi->$biayaField) {
+                $administrasi->$statusField = true;
+                $tanggalField = 'tanggal_bayar_' . $jenis;
+                $administrasi->$tanggalField = now();
+            }
         }
 
-        // Update status keseluruhan
-        $totalBiaya = $administrasi->biaya_pendaftaran +
-                     $administrasi->biaya_ppdb +
-                     $administrasi->biaya_mpls +
-                     $administrasi->biaya_awal_tahun;
-
-        $administrasi->status_pembayaran =
-            ($administrasi->total_bayar >= $totalBiaya) ? 'Lunas' : 'Belum Lunas';
-
-            $administrasi->sisa_pembayaran = $totalBiaya - $administrasi->total_bayar;
+        $totalBiaya = $administrasi->biaya_pendaftaran + $administrasi->biaya_ppdb + $administrasi->biaya_mpls + $administrasi->biaya_awal_tahun;
+        $administrasi->status_pembayaran = ($administrasi->total_bayar >= $totalBiaya) ? 'Lunas' : 'Belum Lunas';
+        $administrasi->sisa_pembayaran = $totalBiaya - $administrasi->total_bayar;
 
         $administrasi->save();
+    }
+
+    private function hitungTotalPembayaran(Administrasi $administrasi, array $jenisPembayaran, $jumlahBayar)
+    {
+        return $jumlahBayar;
     }
 }

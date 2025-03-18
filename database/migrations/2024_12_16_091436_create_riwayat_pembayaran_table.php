@@ -15,7 +15,7 @@ public function up()
     Schema::create('riwayat_pembayaran', function (Blueprint $table) {
         $table->id();
         $table->foreignId('administrasi_id')->constrained('administrasis');
-        $table->string('no_pembayaran')->unique();
+        $table->string('no_pembayaran')->unique()->default('auto');
         $table->datetime('tanggal_bayar');
         $table->enum('jenis_pembayaran', ['pendaftaran', 'ppdb', 'mpls', 'awal_tahun']);
         $table->decimal('jumlah_bayar', 10, 2);

@@ -52,6 +52,10 @@ class Pendaftaran extends Model
     return $this->belongsTo(Jurusan::class);
 }
 
+    public function riwayat_pembayaran() {
+        return $this->hasMany(RiwayatPembayaran::class, 'pendaftaran_id');
+    }
+
     public function kelas()
     {
         return $this->belongsTo(Kelas::class);

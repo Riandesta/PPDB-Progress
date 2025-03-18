@@ -65,6 +65,26 @@ class Administrasi extends Model
         $this->save();
     }
 
+    public function totalBayarUntukJenis($jenis) {
+        return $this->riwayatPembayaran()
+                    ->where('jenis_pembayaran', $jenis)
+                    ->sum('jumlah_bayar');
+    }
+
+    public function getSisaPembayaranAttribute()
+{
+    // Hitung total biaya
+    $totalBiaya = $this->biaya_pendaftaran + $this->biaya_ppdb + $this->biaya_mpls + $this->biaya_awal_tahun;
+
+    // Kembalikan selisih total biaya dan total bayar
+    return $totalBiaya - $this->total_bayar;
+}
+
+public function getSisaPembayaranFormattedAttribute()
+{
+    return 'Rp ' . number_format($this->sisa_pembayaran, 0, ',', '.');
+}
+
     public function setSisaPembayaranAttribute($value)
     {
         $this->attributes['sisa_pembayaran'] = $this->biaya_pendaftaran + $this->biaya_ppdb + $this->biaya_awal_tahun + $this->biaya_mpls - $this->total_bayar;
