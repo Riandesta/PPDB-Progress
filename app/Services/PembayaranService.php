@@ -9,26 +9,41 @@ use Illuminate\Support\Facades\Storage;
 class PembayaranService
 {
     public function prosesPembayaran(Administrasi $administrasi, array $data)
-    {
-        // Validasi pembayaran
-        $this->validasiPembayaran($administrasi, $data);
+{
+    // Validasi pembayaran
+    $this->validasiPembayaran($administrasi, $data);
 
-        // Upload bukti pembayaran jika ada
-        $buktiPembayaran = isset($data['bukti_pembayaran']) ? $this->uploadBuktiPembayaran($data['bukti_pembayaran']) : null;
+    // Upload bukti pembayaran jika ada
+    $buktiPembayaran = isset($data['bukti_pembayaran']) ? $this->uploadBuktiPembayaran($data['bukti_pembayaran']) : null;
 
-        // Hitung total pembayaran dari komponen yang dipilih
-        $totalPembayaran = $this->hitungTotalPembayaran(
-            $administrasi,
-            $data['jenis_pembayaran'],
-            $data['jumlah_bayar']
-        );
+    // Hitung total pembayaran dari komponen yang dipilih
+    $totalPembayaran = $this->hitungTotalPembayaran(
+        $administrasi,
+        $data['jenis_pembayaran'],
+        $data['jumlah_bayar']
+    );
 
-        // Buat record riwayat pembayaran
-        $this->createRiwayatPembayaran($administrasi, $data['jumlah_bayar'], $data['metode_pembayaran'], $buktiPembayaran);
+    // Buat record riwayat pembayaran
+    $pembayaran = $this->createRiwayatPembayaran($administrasi, $data['jumlah_bayar'], $data['metode_pembayaran'], $buktiPembayaran);
 
-        // Update status pembayaran administrasi
-        $this->updateStatusPembayaran($administrasi, $totalPembayaran, $data['jenis_pembayaran']);
-    }
+    // Update status pembayaran administrasi
+    $this->updateStatusPembayaran($administrasi, $totalPembayaran, $data['jenis_pembayaran']);
+
+    return $pembayaran; // Return the pembayaran object
+}
+
+private function createRiwayatPembayaran($administrasi, $jumlahBayar, $metodePembayaran, $buktiPembayaran = null)
+{
+    return RiwayatPembayaran::create([
+        'administrasi_id' => $administrasi->id,
+        'jumlah_bayar' => $jumlahBayar,
+        'metode_pembayaran' => $metodePembayaran,
+        'tanggal_bayar' => now(),
+        'keterangan' => 'Pembayaran awal pendaftaran',
+        'bukti_pembayaran' => $buktiPembayaran,
+        'status' => 'success'
+    ]);
+}
 
     private function validasiPembayaran(Administrasi $administrasi, array $data)
     {
@@ -49,19 +64,6 @@ class PembayaranService
     private function uploadBuktiPembayaran($file)
     {
         return $file->store('bukti-pembayaran', 'public');
-    }
-
-    private function createRiwayatPembayaran($administrasi, $jumlahBayar, $metodePembayaran, $buktiPembayaran = null)
-    {
-        RiwayatPembayaran::create([
-            'administrasi_id' => $administrasi->id,
-            'jumlah_bayar' => $jumlahBayar,
-            'metode_pembayaran' => $metodePembayaran,
-            'tanggal_bayar' => now(),
-            'keterangan' => 'Pembayaran awal pendaftaran',
-            'bukti_pembayaran' => $buktiPembayaran,
-            'status' => 'success'
-        ]);
     }
 
     private function updateStatusPembayaran(Administrasi $administrasi, $totalPembayaran, $jenisPembayaran)

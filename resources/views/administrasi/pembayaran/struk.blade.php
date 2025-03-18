@@ -1,3 +1,4 @@
+{{-- Struk Pembayaran --}}
 <div class="container-fluid">
     <div class="card">
         <div class="card-body">
@@ -11,7 +12,7 @@
                     <table class="table table-borderless">
                         <tr>
                             <td class="font-weight-bold">No. Pembayaran</td>
-                            {{-- <td>: {{ $pembayaran->no_bayar }}</td> --}}
+                            <td>: {{ $pembayaran->no_bayar }}</td>
                         </tr>
                         <tr>
                             <td class="font-weight-bold">Tanggal</td>
@@ -23,7 +24,16 @@
                         </tr>
                         <tr>
                             <td class="font-weight-bold">Jenis Pembayaran</td>
-                            <td>: {{ ucfirst($pembayaran->jenis_pembayaran) }}</td>
+                            <td>
+                                :
+                                @if (is_array($pembayaran->jenis_pembayaran))
+                                    {{ ucfirst(implode(', ', $pembayaran->jenis_pembayaran)) }}
+                                @elseif (is_string($pembayaran->jenis_pembayaran))
+                                    {{ ucfirst($pembayaran->jenis_pembayaran) }}
+                                @else
+                                    {{ 'Unknown' }}
+                                @endif
+                            </td>
                         </tr>
                         <tr>
                             <td class="font-weight-bold">Jumlah Bayar</td>

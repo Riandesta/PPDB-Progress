@@ -84,6 +84,7 @@ class AdministrasiController extends Controller
         try {
             DB::beginTransaction();
 
+            // Ensure prosesPembayaran returns the pembayaran object
             $pembayaran = $this->pembayaranService->prosesPembayaran(
                 $administrasi,
                 $request->all()
@@ -92,7 +93,11 @@ class AdministrasiController extends Controller
             DB::commit();
 
             // Generate struk pembayaran
-            return view('administrasi.pembayaran.struk', compact('pembayaran'));
+            if ($pembayaran) {
+                return view('administrasi.pembayaran.struk', compact('pembayaran'));
+            } else {
+                return back()->with('error', 'Pembayaran gagal: Data pembayaran tidak ditemukan.');
+            }
 
         } catch (\Exception $e) {
             DB::rollBack();
